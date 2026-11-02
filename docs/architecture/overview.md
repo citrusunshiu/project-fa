@@ -13,7 +13,7 @@ flowchart LR
   merchant([Merchant])
   ops([Operations staff])
 
-  system[["The company's platform<br/>marketplace with delivery"]]
+  system[["Project FA platform<br/>marketplace with delivery"]]
 
   processor["Payment processor<br/>(simulated)"]
   push["Push providers<br/>APNs, FCM"]

@@ -2,7 +2,7 @@
 
 ## The company
 
-A super-app holding company. One shared internal platform serves several business lines, which is how large regional super-apps are built in practice. It starts with a single line, a **local marketplace with delivery**. Other lines can arrive later, each starting on paper, when a topic needs one: a video line, for example, if a design question needs video.
+**Project FA** is a super-app holding company. One shared internal platform serves several business lines, which is how large regional super-apps are built in practice. It starts with a single line, a **local marketplace with delivery**. Other lines can arrive later, each starting on paper, when a topic needs one: a video line, for example, if a design question needs video.
 
 The platform team is a first-class part of the design. It owns identity, the edge, the event backbone, observability, experimentation and the paved road that every service follows (the [platform contract](../architecture/platform-contract.md)).
 

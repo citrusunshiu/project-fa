@@ -4,7 +4,7 @@
 
 Design notes can explain a retry policy or a cache. What they can't give you is the moment a decision meets its consequences: the retry policy that looked fine until a dependency slowed down, or the cache that hid a hot key until the flash sale. This repository exists to produce those moments on purpose and measure them.
 
-It describes one fictional company's system end to end, builds the parts worth learning, and runs the whole thing under load and under faults. It is the place where many designs meet in one system, where behaviour under failure gets measured instead of guessed, and where decisions can be deliberately wrong so the result can be watched.
+It describes the system of one fictional company, Project FA, end to end, builds the parts worth learning, and runs the whole thing under load and under faults. It is the place where many designs meet in one system, where behaviour under failure gets measured instead of guessed, and where decisions can be deliberately wrong so the result can be watched.
 
 ## Non-goals
 
