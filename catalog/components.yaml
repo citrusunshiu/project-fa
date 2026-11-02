@@ -1,0 +1,647 @@
+# The component catalog: the source of truth for what exists and how real it is.
+# tools/check_catalog.py checks this file against the docs and the code on every change.
+#
+# status:   planned  - accepted into the design
+#           proposed - under review; needs a design doc once accepted
+#           optional - may be added later
+# fidelity: F0 paper, F1 simulated, F2 real path, F3 hardened (docs/charter.md)
+# target:   the phase in which the component reaches the given fidelity
+
+schema: 1
+
+# The roadmap phase the repository is in (docs/charter.md#roadmap).
+# During Phase 0, planned components without a design doc are reported as pending, not as errors.
+phase: 0
+
+languages: [go, python, java, csharp, rust, cpp, c, typescript, kotlin, swift]
+
+lines:
+  marketplace: Local marketplace with delivery, the first business line
+  platform: The shared internal platform
+  harness: The test harness that sits beside the system under test
+  lab: The lab track
+
+components:
+  # Edge and identity
+  - id: rate-limiter
+    name: Global rate limiter (Envoy rate-limit gRPC API)
+    line: platform
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 1, fidelity: F1}
+    language: rust
+    stores: [valkey]
+    depends_on: []
+    design: docs/design/edge-and-identity.md
+
+  - id: web-bff
+    name: Web backend-for-frontend
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 8, fidelity: F2}
+    language: typescript
+    framework: Node, Fastify
+    depends_on: [catalog-api, group-cart, checkout-saga]
+    design: docs/design/edge-and-identity.md
+
+  - id: mobile-bff
+    name: Mobile backend-for-frontend
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 9, fidelity: F2}
+    language: kotlin
+    framework: Ktor
+    depends_on: [catalog-api, checkout-saga, location-ingest]
+    design: docs/design/edge-and-identity.md
+
+  - id: accounts
+    name: Accounts and profiles
+    line: platform
+    kind: service
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    language: kotlin
+    stores: [postgres]
+    depends_on: []
+    design: docs/design/edge-and-identity.md
+
+  # Browse and search
+  - id: catalog-api
+    name: Catalog API
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 7, fidelity: F2}
+    language: java
+    framework: Spring Boot
+    stores: [mongodb, valkey]
+    depends_on: []
+    design: docs/design/browse-and-search.md
+
+  - id: search-indexer
+    name: Search indexer (change streams to OpenSearch)
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 7, fidelity: F2}
+    language: java
+    framework: Debezium, Kafka Connect
+    stores: [opensearch]
+    brokers: [kafka]
+    depends_on: [catalog-api]
+    design: docs/design/browse-and-search.md
+
+  - id: typeahead
+    name: Typeahead
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 7, fidelity: F2}
+    language: rust
+    stores: [opensearch]
+    depends_on: [search-indexer]
+    design: docs/design/browse-and-search.md
+
+  - id: catalog-crawler
+    name: Merchant catalog crawler
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 7, fidelity: F2}
+    language: python
+    depends_on: [catalog-api]
+    design: docs/design/browse-and-search.md
+
+  - id: back-office
+    name: Merchant and operations back-office
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 7, fidelity: F2}
+    language: python
+    framework: Django
+    stores: [postgres]
+    depends_on: [catalog-api]
+    design: docs/design/browse-and-search.md
+
+  - id: reviews
+    name: Reviews and ratings
+    line: marketplace
+    kind: service
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    design: docs/design/browse-and-search.md
+
+  - id: price-alerts
+    name: Price-drop and back-in-stock alerts
+    line: marketplace
+    kind: service
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    brokers: [kafka]
+    depends_on: [catalog-api, notifications]
+    design: docs/design/browse-and-search.md
+
+  - id: trending
+    name: Trending items and leaderboards
+    line: marketplace
+    kind: service
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    stores: [valkey]
+    brokers: [kafka]
+    design: docs/design/browse-and-search.md
+
+  # Cart and checkout
+  - id: group-cart
+    name: Group cart
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 8, fidelity: F2}
+    language: csharp
+    framework: Orleans
+    stores: [postgres]
+    depends_on: [catalog-api]
+    design: docs/design/group-cart.md
+
+  - id: checkout-saga
+    name: Order and checkout saga
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 2, fidelity: F2}
+    language: kotlin
+    framework: Spring Boot, Temporal
+    stores: [postgres]
+    brokers: [kafka]
+    depends_on: [pricing, inventory, payments-ledger]
+    design: docs/design/checkout-and-payments.md
+
+  - id: pricing
+    name: Pricing, fees, taxes and promotions
+    line: marketplace
+    kind: service
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    language: java
+    stores: [postgres, valkey]
+    design: docs/design/checkout-and-payments.md
+
+  - id: payments-ledger
+    name: Payments and ledger
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 2, fidelity: F2}
+    language: csharp
+    framework: ASP.NET Core
+    stores: [postgres, cockroachdb]
+    brokers: [kafka]
+    depends_on: [payment-processor-fake]
+    design: docs/design/checkout-and-payments.md
+
+  - id: payment-processor-fake
+    name: Fake payment processor
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 2, fidelity: F2}
+    language: python
+    framework: FastAPI
+    depends_on: []
+    design: docs/design/checkout-and-payments.md
+
+  - id: payouts-scheduler
+    name: Payouts scheduler
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 1, fidelity: F1}
+    language: csharp
+    framework: Temporal
+    depends_on: [payments-ledger]
+    design: docs/design/checkout-and-payments.md
+
+  - id: subscriptions
+    name: Subscriptions and recurring billing
+    line: marketplace
+    kind: service
+    status: optional
+    fidelity: F0
+    language: csharp
+    design: docs/design/checkout-and-payments.md
+
+  - id: inventory
+    name: Inventory and flash-sale reservation
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 2, fidelity: F2}
+    language: go
+    stores: [postgres, valkey]
+    depends_on: []
+    design: docs/design/flash-sales.md
+
+  # Dispatch and tracking
+  - id: dispatch-matching
+    name: Dispatch matching
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 6, fidelity: F2}
+    language: cpp
+    stores: [valkey]
+    brokers: [kafka]
+    depends_on: [location-ingest]
+    design: docs/design/dispatch-and-tracking.md
+
+  - id: location-ingest
+    name: Location ingest
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 6, fidelity: F2}
+    language: rust
+    stores: [valkey, cassandra]
+    brokers: [kafka]
+    depends_on: []
+    design: docs/design/dispatch-and-tracking.md
+
+  - id: live-gateway
+    name: Live updates gateway (tracking and chat over WebSockets)
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 6, fidelity: F2}
+    language: go
+    brokers: [nats]
+    depends_on: []
+    design: docs/design/dispatch-and-tracking.md
+
+  - id: geo
+    name: Geo (geocoding, delivery zones, serviceability, routing)
+    line: platform
+    kind: service
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    language: go
+    design: docs/design/dispatch-and-tracking.md
+
+  - id: courier-service
+    name: Courier service (onboarding, shifts, earnings)
+    line: marketplace
+    kind: service
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    language: swift
+    framework: Vapor
+    stores: [postgres]
+    design: docs/design/dispatch-and-tracking.md
+
+  # Merchant operations
+  - id: merchant-ops
+    name: Merchant operations (acceptance, prep times, hours)
+    line: marketplace
+    kind: service
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    language: typescript
+    design: docs/design/merchant-operations.md
+
+  - id: outbound-webhooks
+    name: Outbound webhooks to merchant point-of-sale systems
+    line: marketplace
+    kind: service
+    status: optional
+    fidelity: F0
+    language: typescript
+    design: docs/design/merchant-operations.md
+
+  # Engagement
+  - id: notifications
+    name: Notifications (push, SMS, email)
+    line: platform
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 9, fidelity: F2}
+    language: typescript
+    framework: Node
+    brokers: [kafka, rabbitmq]
+    depends_on: []
+    design: docs/design/notifications.md
+
+  - id: deals-feed
+    name: Deals feed
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 1, fidelity: F1}
+    language: go
+    stores: [valkey, postgres]
+    depends_on: [catalog-api]
+    design: docs/design/deals-feed.md
+
+  - id: photo-pipeline
+    name: Photo pipeline
+    line: platform
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 1, fidelity: F1}
+    language: cpp
+    framework: libvips
+    stores: [seaweedfs]
+    depends_on: []
+    design: docs/design/media.md
+
+  - id: share-links
+    name: Share links
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 10, fidelity: F2}
+    language: swift
+    framework: Vapor
+    stores: [postgres, valkey]
+    depends_on: []
+    design: docs/design/share-links.md
+
+  - id: ad-click-aggregation
+    name: Ad-click aggregation
+    line: marketplace
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 7, fidelity: F2}
+    language: java
+    framework: Flink
+    stores: [clickhouse]
+    brokers: [kafka]
+    depends_on: []
+    design: docs/design/ads.md
+
+  - id: ads-auction
+    name: Sponsored-listing auction (bidding, budgets, pacing)
+    line: marketplace
+    kind: service
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    depends_on: [ad-click-aggregation]
+    design: docs/design/ads.md
+
+  # Trust, safety and support
+  - id: fraud-risk
+    name: Fraud and risk
+    line: platform
+    kind: service
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    language: python
+    design: docs/design/trust-and-safety.md
+
+  - id: support-refunds
+    name: Support and refunds
+    line: marketplace
+    kind: service
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    language: csharp
+    depends_on: [payments-ledger]
+    design: docs/design/trust-and-safety.md
+
+  - id: privacy-deletion
+    name: Privacy deletion pipeline
+    line: platform
+    kind: service
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    language: kotlin
+    framework: Temporal
+    design: docs/design/trust-and-safety.md
+
+  # Experimentation and ML
+  - id: experiment-assignment
+    name: Experiment assignment (layers, holdouts, switchback tests)
+    line: platform
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {fidelity: F1}
+    language: go
+    depends_on: []
+    design: docs/design/experimentation.md
+
+  - id: event-ingestion
+    name: Client event ingestion
+    line: platform
+    kind: service
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    language: go
+    stores: [clickhouse]
+    brokers: [kafka]
+    design: docs/design/experimentation.md
+
+  - id: models
+    name: Delivery-time and ranking models
+    line: platform
+    kind: service
+    status: planned
+    fidelity: F0
+    target: {phase: 1, fidelity: F1}
+    language: python
+    depends_on: []
+    design: docs/design/ml-platform.md
+
+  - id: ml-platform
+    name: ML platform (training pipelines, feature store, registry, serving)
+    line: platform
+    kind: platform
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    language: python
+    design: docs/design/ml-platform.md
+
+  - id: llm-gateway
+    name: LLM gateway and support assistant
+    line: platform
+    kind: service
+    status: proposed
+    fidelity: F0
+    target: {fidelity: F1}
+    design: docs/design/ml-platform.md
+
+  # Clients
+  - id: web-app
+    name: Web app (customer and merchant modes)
+    line: marketplace
+    kind: client
+    status: planned
+    fidelity: F0
+    target: {phase: 8, fidelity: F2}
+    language: typescript
+    framework: React
+    depends_on: [web-bff]
+    design: docs/design/clients.md
+
+  - id: android-app
+    name: Android app (customer and courier modes)
+    line: marketplace
+    kind: client
+    status: planned
+    fidelity: F0
+    target: {phase: 9, fidelity: F2}
+    language: kotlin
+    framework: Jetpack Compose
+    depends_on: [mobile-bff]
+    design: docs/design/clients.md
+
+  - id: ios-app
+    name: iOS app (customer and courier modes)
+    line: marketplace
+    kind: client
+    status: planned
+    fidelity: F0
+    target: {phase: 10, fidelity: F2}
+    language: swift
+    framework: SwiftUI
+    depends_on: [mobile-bff]
+    design: docs/design/clients.md
+
+  # Harness
+  - id: sim
+    name: Simulator (plays any component from a topology file)
+    line: harness
+    kind: platform
+    status: planned
+    fidelity: F0
+    target: {phase: 1, fidelity: F2}
+    language: go
+    design: docs/design/harness.md
+
+  - id: invariant-checkers
+    name: Invariant checkers and experiment analysis
+    line: harness
+    kind: platform
+    status: planned
+    fidelity: F0
+    target: {phase: 1, fidelity: F2}
+    language: python
+    design: docs/design/harness.md
+
+  - id: load-scenarios
+    name: Load scenarios and traffic models
+    line: harness
+    kind: platform
+    status: planned
+    fidelity: F0
+    target: {phase: 1, fidelity: F2}
+    language: typescript
+    framework: k6
+    design: docs/design/harness.md
+
+  - id: fleet-runner
+    name: Multi-device fleet runner
+    line: harness
+    kind: platform
+    status: planned
+    fidelity: F0
+    target: {phase: 4, fidelity: F2}
+    framework: Ansible
+    design: docs/design/harness.md
+
+  - id: ebpf-probes
+    name: eBPF probes and XDP packet dropper
+    line: harness
+    kind: platform
+    status: planned
+    fidelity: F0
+    target: {phase: 3, fidelity: F2}
+    language: c
+    framework: libbpf
+    design: docs/design/harness.md
+
+  # Lab
+  - id: raft-config-service
+    name: Raft config and lock service
+    line: lab
+    kind: service
+    status: planned
+    fidelity: F0
+    language: go
+    design: docs/design/lab.md
+
+  - id: distributed-cache
+    name: Lab-built distributed cache (consistent hashing, replication)
+    line: lab
+    kind: service
+    status: optional
+    fidelity: F0
+    design: docs/design/lab.md
+
+# Off-the-shelf infrastructure. Not built here, so no fidelity level.
+infrastructure:
+  - {id: postgres, name: PostgreSQL via CloudNativePG, kind: datastore, licence: PostgreSQL}
+  - {id: cockroachdb, name: CockroachDB, kind: datastore, licence: CockroachDB Software License (source-available)}
+  - {id: cassandra, name: Apache Cassandra 5, kind: datastore, licence: Apache-2.0}
+  - {id: valkey, name: Valkey, kind: datastore, licence: BSD-3-Clause}
+  - {id: mongodb, name: MongoDB Community Server, kind: datastore, licence: SSPL}
+  - {id: opensearch, name: OpenSearch, kind: datastore, licence: Apache-2.0}
+  - {id: clickhouse, name: ClickHouse, kind: datastore, licence: Apache-2.0}
+  - {id: seaweedfs, name: SeaweedFS, kind: datastore, licence: Apache-2.0}
+  - {id: kafka, name: Apache Kafka 4 (KRaft), kind: broker, licence: Apache-2.0}
+  - {id: apicurio, name: Apicurio Registry, kind: broker, licence: Apache-2.0}
+  - {id: nats, name: NATS JetStream, kind: broker, licence: Apache-2.0}
+  - {id: rabbitmq, name: RabbitMQ, kind: broker, licence: MPL-2.0}
+  - {id: debezium, name: Debezium, kind: broker, licence: Apache-2.0}
+  - {id: temporal, name: Temporal, kind: workflow, licence: MIT}
+  - {id: envoy-gateway, name: Envoy Gateway, kind: edge, licence: Apache-2.0}
+  - {id: keycloak, name: Keycloak, kind: identity, licence: Apache-2.0}
+  - {id: openfga, name: OpenFGA, kind: identity, licence: Apache-2.0}
+  - {id: cilium, name: Cilium, kind: network, licence: Apache-2.0}
+  - {id: flagd, name: flagd (OpenFeature), kind: delivery, licence: Apache-2.0}
+  - {id: growthbook, name: GrowthBook (self-hosted), kind: delivery, licence: MIT (core)}
+  - {id: flux, name: Flux, kind: delivery, licence: Apache-2.0}
+  - {id: otel-collector, name: OpenTelemetry Collector, kind: observability, licence: Apache-2.0}
+  - {id: prometheus, name: Prometheus, kind: observability, licence: Apache-2.0}
+  - {id: grafana-stack, name: Grafana, Tempo and Loki, kind: observability, licence: AGPL-3.0}
+  - {id: chaos-mesh, name: Chaos Mesh, kind: testing, licence: Apache-2.0}
+  - {id: toxiproxy, name: Toxiproxy, kind: testing, licence: MIT}
+  - {id: k6, name: Grafana k6, kind: testing, licence: AGPL-3.0}
