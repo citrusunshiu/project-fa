@@ -2,6 +2,7 @@ name: checks
 
 on:
   pull_request:
+    types: [opened, edited, synchronize, reopened]
   push:
     branches: [main]
 
@@ -30,6 +31,20 @@ jobs:
             range="$BASE..$HEAD"
           fi
           tools/check.sh --commits "$range"
+      - name: Pull request title and body
+        if: github.event_name == 'pull_request'
+        env:
+          PUBLIC_TEXT_DENYLIST: ${{ secrets.PUBLIC_TEXT_DENYLIST }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          types='feat|fix|perf|refactor|test|docs|build|ci|chore|revert'
+          if ! printf '%s\n' "$PR_TITLE" | grep -Eq "^($types)(\([a-z0-9-]+\))?!?: [^ ]"; then
+            echo "error: the title must read 'type(scope): summary' (AGENTS.md)"
+            exit 1
+          fi
+          printf '%s\n\n%s\n' "$PR_TITLE" "$PR_BODY" > "$RUNNER_TEMP/pull-request.txt"
+          uv run --quiet tools/check_public_text.py --text "$RUNNER_TEMP/pull-request.txt"
 
   secrets:
     runs-on: ubuntu-24.04

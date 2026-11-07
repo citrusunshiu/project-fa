@@ -9,7 +9,9 @@ The [README](README.md), the [charter](docs/charter.md) and the [catalog](catalo
 ## How changes land
 
 - Work starts from a GitHub issue.
-- Each change goes on its own branch and lands on `main` as a squash-merged pull request with green checks. The pull request title follows [Conventional Commits](https://www.conventionalcommits.org/) and becomes the commit message.
+- Each change goes on its own branch and lands on `main` as a squash-merged pull request with green checks. The pull request title becomes the commit's subject on `main` and the pull request body becomes its body, so both are written as a commit message.
+- **Title:** `type(scope): summary`, in [Conventional Commits](https://www.conventionalcommits.org/) form. The type is one of `feat`, `fix`, `perf`, `refactor`, `test`, `docs`, `build`, `ci`, `chore` or `revert`. The scope is optional: a catalog component id (`ledger`), a slice (`checkout-and-payments`), or one of `adr`, `catalog`, `platform`, `infra`, `load`, `chaos`, `sim`, `tools`. A `!` before the colon marks a breaking change to a published contract. CI checks the form.
+- **Body:** what changed and why, then `Closes #<issue>`. When an AI agent helped, the last line is its `Co-Authored-By` trailer, because the body is what lands on `main`. CI runs the public-text check on the title and body.
 - Run `tools/check.sh` before pushing. Enable the pre-push hook once per clone with `git config core.hooksPath .githooks`, and never bypass it.
 
 ## Public-text rules ([ADR-0010](docs/adr/0010-licence-and-public-text-policy.md))

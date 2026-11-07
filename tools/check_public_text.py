@@ -2,12 +2,12 @@
 # requires-python = ">=3.12"
 # dependencies = []
 # ///
-"""Fail if tracked files, or commit messages in a range, contain private identifiers (ADR-0010).
+"""Fail if tracked files, commit messages in a range, or extra text files contain private identifiers (ADR-0010).
 
 Generic patterns live here. Exact private terms never do: they come from a git-ignored
 .public-text-denylist file and from the PUBLIC_TEXT_DENYLIST environment variable (one term per line).
 
-Usage: check_public_text.py [--commits <range>]
+Usage: check_public_text.py [--commits <range>] [--text <file> ...]
 """
 import argparse
 import os
@@ -52,6 +52,7 @@ def git(*args: str) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--commits", help="also check the messages of commits in this range, e.g. origin/main..HEAD")
+    ap.add_argument("--text", action="append", default=[], help="also check this file, e.g. a pull request's title and body")
     a = ap.parse_args()
     terms = private_terms()
     errors = []
@@ -71,6 +72,10 @@ def main() -> int:
             meta = git("show", "-s", "--format=%an <%ae>%n%cn <%ce>%n%B", sha)
             for label in findings(meta, terms):
                 errors.append(f"commit {sha[:12]}: {label}")
+    for name in a.text:
+        for lineno, line in enumerate(pathlib.Path(name).read_text().splitlines(), 1):
+            for label in findings(line, terms):
+                errors.append(f"{pathlib.Path(name).name}:{lineno}: {label}")
     for e in sorted(set(errors)):
         print(f"error: {e}")
     print(f"public text: {len(terms)} private terms loaded; {len(set(errors))} errors")
