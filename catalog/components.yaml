@@ -636,9 +636,11 @@ infrastructure:
   - {id: keycloak, name: Keycloak, kind: identity, licence: Apache-2.0}
   - {id: openfga, name: OpenFGA, kind: identity, licence: Apache-2.0}
   - {id: cilium, name: Cilium, kind: network, licence: Apache-2.0}
+  - {id: tailscale-operator, name: Tailscale Kubernetes operator, kind: network, licence: BSD-3-Clause (client; coordination is hosted)}
   - {id: flagd, name: flagd (OpenFeature), kind: delivery, licence: Apache-2.0}
   - {id: growthbook, name: GrowthBook (self-hosted), kind: delivery, licence: MIT (core)}
   - {id: flux, name: Flux, kind: delivery, licence: Apache-2.0}
+  - {id: external-secrets, name: External Secrets Operator, kind: delivery, licence: Apache-2.0}
   - {id: otel-collector, name: OpenTelemetry Collector, kind: observability, licence: Apache-2.0}
   - {id: prometheus, name: Prometheus, kind: observability, licence: Apache-2.0}
   - {id: grafana-stack, name: Grafana, Tempo and Loki, kind: observability, licence: AGPL-3.0}

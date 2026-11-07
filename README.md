@@ -22,7 +22,7 @@ The output is the experiment. Each one states a hypothesis with a number in it, 
 
 1. [Charter](docs/charter.md): purpose, non-goals, the fidelity ladder, what results may claim.
 2. [Company brief](docs/company/brief.md): what Project FA does, the features and the problem each one forces, and the paper-scale estimates.
-3. [Architecture overview](docs/architecture/overview.md) and the [platform contract](docs/architecture/platform-contract.md) every service meets.
+3. [Architecture overview](docs/architecture/overview.md), the [platform contract](docs/architecture/platform-contract.md) every service meets, and the [environments](docs/architecture/environments.md) it runs in: a laptop, owned machines, AWS, GCP, Azure, or a split across them.
 4. [Decision records](docs/adr/README.md): why each choice was made, with a lab stance and a production stance.
 5. [Component catalog](catalog/components.yaml): every component, its fidelity level, language, stores and design doc.
 
@@ -41,7 +41,7 @@ The output is the experiment. Each one states a hypothesis with a number in it, 
 docs/
   charter.md         purpose, non-goals, fidelity ladder, claims policy, roadmap
   company/           product brief, estimates, SLO drafts
-  architecture/      context and container diagrams, platform contract
+  architecture/      context and container diagrams, platform contract, environments
   adr/               decision records
   design/            design docs, one per slice of the system
   experiments/       experiment reports, written by the runs themselves

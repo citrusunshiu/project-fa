@@ -10,6 +10,7 @@ The numbers below are starting defaults. Experiments are expected to change them
 - **`GET /readyz`** returns 200 only when the service can serve traffic: config loaded, required connections open, warm-up done.
 - **Graceful shutdown on SIGTERM.** Fail readiness first, keep serving in-flight requests while the endpoints update (5 s), drain, then exit within 25 s, inside Kubernetes' default 30-second grace period.
 - **Config comes from the environment.** No config files baked into images; secrets come from mounted files.
+- **Stores and brokers arrive as bindings.** Each dependency is a directory of mounted files under `$SERVICE_BINDING_ROOT/<name>/` (`type`, `host`, `port`, `username`, `password` and so on), in the [Service Binding for Kubernetes](https://servicebinding.io/) layout. An in-cluster store and a managed one look the same to the code ([environments](environments.md)).
 
 ## Telemetry
 
@@ -71,6 +72,6 @@ These complement Chaos Mesh, which works below the application; they let an expe
 
 ## Shipping
 
-- **One container image per service,** built from its language template, running as non-root on a read-only root filesystem.
+- **One container image per service,** built from its language template for linux/amd64 and linux/arm64, running as non-root on a read-only root filesystem.
 - **One Helm chart per service,** built on a shared library chart, so health probes, resources, telemetry and network policy look the same everywhere.
 - **A language's first service ships with its template and its CI job,** in the same change.

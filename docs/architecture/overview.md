@@ -174,7 +174,7 @@ The harness sits beside the system under test and never shares its CPUs.
 
 ## Profiles
 
-A laptop can't run everything at once, so the local cluster comes in three profiles. Phase 1 measures each one's memory and disk footprint.
+A laptop can't run everything at once, so the local cluster comes in three profiles. Phase 1 measures each one's memory and disk footprint. Owned machines and the clouds are other targets for the same system, described in [environments](environments.md).
 
 | Profile | Runs |
 |---|---|
