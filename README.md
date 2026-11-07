@@ -41,7 +41,7 @@ The output is the experiment. Each one states a hypothesis with a number in it, 
 docs/
   charter.md         purpose, non-goals, fidelity ladder, claims policy, roadmap
   company/           product brief, estimates, SLO drafts
-  architecture/      context and container diagrams, platform contract, environments
+  architecture/      context and container diagrams, platform contract, environments, costs
   adr/               decision records
   design/            design docs, one per slice of the system
   experiments/       experiment reports, written by the runs themselves

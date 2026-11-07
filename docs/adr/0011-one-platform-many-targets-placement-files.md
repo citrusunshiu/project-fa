@@ -11,7 +11,7 @@ The system has to run in more than one place. Phase 1 runs on a laptop ([ADR-000
 
 Without a rule, each target grows its own copy of the manifests and the copies drift. The questions are which parts may differ per target, and how a split is declared.
 
-The numbers that matter:
+The numbers that matter, as of this record's date ([costs](../architecture/costs.md) keeps the current figures):
 
 - A managed control plane costs about $0.10 an hour on EKS and on GKE Standard (GKE's monthly credit covers one zonal cluster), and nothing on AKS's free tier.
 - Data leaving AWS for the internet costs about $0.09 per GB in the first pricing tier. The courier location stream at peak (30,000 writes a second at about 200 bytes, so 6 MB/s or 21.6 GB an hour) would cost about $2 an hour by itself if it crossed a cloud boundary.

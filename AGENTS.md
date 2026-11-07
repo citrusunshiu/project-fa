@@ -25,6 +25,7 @@ The [README](README.md), the [charter](docs/charter.md) and the [catalog](catalo
 
 - One line per paragraph or list item in Markdown; don't hard-wrap.
 - Plain language and short sentences. Numbers carry units.
+- Prices live in [costs](docs/architecture/costs.md), with their source and the date they were checked. Other documents link there instead of repeating a price.
 - Decisions that span slices get a decision record from [the template](docs/templates/adr.md). A record is never edited to reverse it; a new record supersedes it.
 - Design docs, experiment reports, reading notes and game days use the templates in [docs/templates](docs/templates/).
 - Experiment results are written by the run. Never fill in a result by hand.

@@ -31,10 +31,9 @@ Only the bottom layer differs per target.
 | Secrets behind bindings | SOPS and age | SOPS and age; OpenBao later | Secrets Manager through External Secrets | Secret Manager through External Secrets | Key Vault through External Secrets |
 | Terraform state | — | — | S3 with a native lock file | Cloud Storage | Blob Storage with lease locking |
 | Deletes as one unit | The cluster | `k3s-uninstall.sh` on each machine | A sandbox account: the tag reaper, then aws-nuke as a last resort | A sandbox project: the label reaper, then shutting the project down | A resource group per environment |
-| Control plane cost | Free | Free | About $0.10 an hour | About $0.10 an hour; a monthly credit covers one zonal cluster | Free tier $0; Standard about $0.10 an hour |
 | Cloud-level faults | — | Pull a cable or a plug | AWS Fault Injection Service, including an availability-zone power interruption | No first-party service; Chaos Mesh covers it | Azure Chaos Studio |
 
-Prices are as published in 2026 and get checked again when Phase 5 starts.
+What each target costs to run, and what moving data between targets costs, is in [costs](costs.md).
 
 ### Laptop
 
@@ -64,7 +63,7 @@ Prices are as published in 2026 and get checked again when Phase 5 starts.
 
 - **Long-lived:** a subscription used only for this repository, a storage account for state, a managed identity with a federated credential for GitHub, and a budget with alerts.
 - **Per environment:** one resource group holding a virtual network, an AKS cluster on the free tier, Spot node pools, and managed stores on request (Azure Database for PostgreSQL, Azure Cache). Deleting the resource group deletes the environment.
-- **What it's for:** an optional third substrate, to test how portable the platform layer really is. AKS's free control plane makes it the cheapest cloud cluster.
+- **What it's for:** an optional third substrate, to test how portable the platform layer really is. AKS's free control plane makes it the cheapest cloud cluster ([costs](costs.md#control-planes)).
 
 ### What differs, and where it lives
 
@@ -102,7 +101,7 @@ Node sizes are classes (`small`, `medium`, `large`), which each cloud's Terrafor
 3. The harness never shares nodes with the system under test.
 4. Every cloud target has a time-to-live and a budget below the repository-wide caps.
 5. It lists each synchronous call that crosses targets, with the round-trip time measured between those targets. The simulator then predicts each journey's p99 with that latency added, before anything is paid for.
-6. It estimates the bytes crossing each target boundary from the traffic model and prices them as egress. That number goes into the run's cost report.
+6. It estimates the bytes crossing each target boundary from the traffic model and prices them with the [data-movement prices](costs.md#moving-data). That number goes into the run's cost report.
 
 ## Splits
 
