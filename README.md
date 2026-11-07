@@ -1,4 +1,4 @@
-# fantasy-architecture
+# project-fa
 
 The backend of Project FA, a made-up delivery company, designed on paper, partly built, load-tested and broken on purpose, with the reasoning and the measured results kept side by side.
 
