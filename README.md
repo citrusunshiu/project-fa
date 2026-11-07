@@ -40,6 +40,7 @@ The output is the experiment. Each one states a hypothesis with a number in it, 
 ```
 docs/
   charter.md         purpose, non-goals, fidelity ladder, claims policy, roadmap
+  leak-response.md   what to do when private text gets into the repository
   company/           product brief, estimates, SLO drafts
   architecture/      context and container diagrams, platform contract, environments, costs
   adr/               decision records
@@ -56,7 +57,7 @@ Later phases add `sim/`, `services/`, `templates/`, `platform/`, `load/`, `chaos
 
 ## How it's made
 
-The maintainer drafts docs and code with AI coding agents. The maintainer decides every decision record, and answers each design doc's question chain before reading the model answers. Commits that an agent helped write say so in a `Co-Authored-By` trailer.
+The maintainer drafts docs and code with AI coding agents. The maintainer decides every decision record, and answers each design doc's question chain before reading the model answers. Commits that an agent helped write say so in trailers naming the agent, its model and its effort level ([AGENTS.md](AGENTS.md)).
 
 ## Checks
 

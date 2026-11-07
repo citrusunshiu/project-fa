@@ -91,4 +91,4 @@ Components no phase names stay at F1 until a phase or a reading note pulls them 
 - every planned component in the catalog has a design doc (`tools/check_catalog.py` lists no pending design docs);
 - each founding decision record is decided, and can be defended from its own text;
 - the company brief's estimates have been challenged and either defended or changed;
-- the checks pass in CI, and the public-text check finds nothing.
+- the checks pass in CI, and the public-text check finds nothing over the whole history ([leak response](leak-response.md#before-the-repository-goes-public)).
