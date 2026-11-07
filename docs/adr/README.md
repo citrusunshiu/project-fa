@@ -15,3 +15,4 @@ Each record follows the [template](../templates/adr.md): context, options, decis
 | [0009](0009-terraform-over-opentofu.md) | Terraform, kept compatible with OpenTofu | Proposed |
 | [0010](0010-licence-and-public-text-policy.md) | Licence and public-text policy | Proposed |
 | [0011](0011-one-platform-many-targets-placement-files.md) | One platform on many targets, placed by a placement file | Proposed |
+| [0012](0012-agent-working-memory-in-public.md) | Keep the agents' working memory in public | Proposed |
