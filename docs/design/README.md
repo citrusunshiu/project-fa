@@ -6,7 +6,7 @@ Ordered by the phase that first needs each one. Docs whose components are all pr
 
 | Design doc | Components | First needed |
 |---|---|---|
-| `harness.md` | Simulator, invariant checkers, load scenarios, fleet runner, eBPF probes | Phase 1 |
+| `harness.md` | Simulator, invariant checkers, load scenarios, fleet runner, eBPF probes, cost meter | Phase 1 |
 | `checkout-and-payments.md` | Order saga, payments and ledger, fake processor, payouts; proposed: pricing; optional: subscriptions | Phase 2 |
 | `flash-sales.md` | Inventory and flash-sale reservation | Phase 2 |
 | `edge-and-identity.md` | Rate limiter, web and mobile BFFs; proposed: accounts | Phase 1 |

@@ -129,7 +129,7 @@ Node sizes are classes (`small`, `medium`, `large`), which each cloud's Terrafor
 
 `just env up <name>` runs these steps:
 
-1. Check the placement file, then print the cost estimate (Infracost for the Terraform parts, plus the egress estimate).
+1. Check the placement file, then print the [cost meter](costs.md#the-cost-meter-planned)'s estimate for the environment and its load plan.
 2. Bring up each target's substrate in parallel. Each cloud target has its own Terraform state, keyed by environment.
 3. Install the platform on each cluster: the base add-ons plus that target's overlay.
 4. Join the clusters and create the forwarding Services.

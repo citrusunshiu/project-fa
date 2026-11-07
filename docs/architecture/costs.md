@@ -29,7 +29,7 @@ Checked 2026-11-06, mostly from third-party summaries of the providers' price li
 ### Smaller line items
 
 - **Public IPv4 addresses on AWS:** $0.005 an hour each, in use or idle.
-- **Not priced here yet:** Spot nodes, managed stores, volumes, load balancers and cloud logging. Infracost prices them from each Terraform plan ([environments](environments.md#lifecycle)), and they're added here when Phase 5 settles the sizes.
+- **Not priced here yet:** Spot nodes, managed stores, volumes, load balancers and cloud logging. They're added here when Phase 5 settles the sizes, and the [cost meter](#the-cost-meter-planned) uses them from then on.
 
 ## Worked estimates
 
@@ -53,9 +53,54 @@ When `harness.observability` sits on the laptop, every span, log line and metric
 
 Nodes in private subnets pull images through the NAT gateway at $0.045/GB. An environment that pulls 20 GB of images pays about $0.90 in processing, on top of the gateway's hourly charge. Lab clusters put their nodes in public subnets (six nodes' addresses cost $0.03 an hour) or use an S3 gateway endpoint, which is free, plus endpoints for the container registry.
 
+## The cost meter (planned)
+
+A command-line tool in the harness that shows what an environment is expected to cost per hour, given what it's configured to run, and what it's costing while a test runs. Its numbers are estimates, not bills.
+
+**Why build one.** Existing tools each cover part of the job (checked 2026-11-06):
+
+- Infracost prices a Terraform plan before it's applied. Usage-based charges such as data transfer come from monthly volumes typed into a usage file, and it knows nothing about load plans or targets outside the cloud being planned.
+- OpenCost runs inside a cluster and publishes live cost metrics to Prometheus: node, volume and load-balancer cost per hour, and network egress by zone, region and internet. It only sees a cluster that already exists, one cluster at a time.
+- No open-source tool turned up that estimates data-transfer cost from a load plan and a service topology before a run.
+
+So the meter stays thin. It adds what's missing (targets, placements, load plans) and reuses the rest: Infracost cross-checks the meter's prices for the Terraform parts in CI, and OpenCost feeds its live view in the clouds.
+
+**Inputs:**
+
+- the environment's [placement file](environments.md#placement-files);
+- a machine-readable price table, with the source and check date of every price. When the meter lands, that table becomes the source of the price tables on this page, and a check keeps the two in sync;
+- the `sim` topology, whose edges carry request and response sizes, replaced by the sizes measured from traces once a component is real;
+- optionally, a load plan: stages with durations and arrival rates, kept as a data file that both k6 and the meter read, so the estimate and the run use the same numbers.
+
+**Commands:**
+
+| Command | Shows |
+|---|---|
+| `cost-meter estimate <environment>` | Expected cost per hour by line item (control planes, nodes by size class, addresses, gateways, managed stores) and by boundary for data movement, plus the total for the environment's time-to-live |
+| `cost-meter estimate <environment> --plan <load plan>` | The same for each stage of the plan: the bytes crossing each boundary, which side is billed, and the cost of each stage and of the whole plan |
+| `cost-meter watch <environment>` | A live terminal view during a run: estimated against live cost per hour, spend so far, projected spend at the time-to-live, and the budget |
+| `cost-meter serve` | The same numbers as Prometheus metrics, so the run's Grafana dashboard shows cost per hour beside latency and errors |
+
+**Where the live numbers come from:** OpenCost's metrics in each cloud cluster, plus the byte counters on the forwarding Services between targets, priced from the table. Targets with nothing to meter, such as the laptop, fall back to the estimate.
+
+**A plan's estimate, for example.** This is a hypothetical split, with location ingest on AWS and the location history store on the laptop, under a plan that ramps to the peak courier rate. Only data leaving AWS is billed; the laptop's traffic into AWS is free.
+
+```
+$ cost-meter estimate tracking-split --plan load/plans/location-peak.yaml
+stage       time    rate          billed boundary   GB     USD
+ramp up     10 min  0 → 30,000/s  aws → laptop      1.8    0.16
+peak        60 min  30,000/s      aws → laptop     21.6    1.94
+ramp down   10 min  30,000/s → 0  aws → laptop      1.8    0.16
+data movement                                      25.2    2.27
+EKS control plane, 80 min                                  0.13
+nodes                             priced once the size classes are set
+```
+
+Each line is rounded on its own, so the lines can differ from the total by a cent. The plan's estimate goes into the experiment report's cost section, next to the live and billed cost.
+
 ## Estimates before a run, bills after it
 
-- **Before:** the driver prints Infracost's estimate for the Terraform plan, plus the data-movement estimate from the placement file and the traffic model. It refuses to start if the total exceeds the environment's budget.
+- **Before:** the driver runs `cost-meter estimate` for the environment and its load plan, and refuses to start if the total exceeds the environment's budget. Until the meter exists, Infracost and the worked estimates on this page stand in.
 - **After:** billing data lags by hours, so a scheduled job adds the billed cost to the run's report once it arrives. It reads AWS costs by the `fa-environment` tag (activated as a cost allocation tag), GCP's billing export by label, and Azure costs by resource group. The report shows the estimate and the billed cost side by side, and a large gap between them is a finding.
 
 ## Open question

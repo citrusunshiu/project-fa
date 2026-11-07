@@ -67,6 +67,7 @@ Option C, with these rules:
 | Kernel probes, XDP packet dropper | C | eBPF programs are restricted C, and libbpf is the canonical C loader | Best fit |
 | Invariant checkers, experiment analysis | Python | Data analysis | Best fit |
 | Load scenarios | TypeScript (k6) | k6 runs TypeScript scripts | Best fit |
+| Cost meter | Rust | One static binary with a live terminal view; no language is clearly better | Tie (Go, Python), for spread |
 
 Proposed components carry a suggested language in the [catalog](../../catalog/components.yaml); this record's map is updated when each one is accepted.
 
@@ -75,7 +76,7 @@ Proposed components carry a suggested language in the [catalog](../../catalog/co
 | Language | Services | Also |
 |---|---|---|
 | Go | 3 | `sim`, operators, the Raft lab |
-| Rust | 3 | |
+| Rust | 3 | The cost meter |
 | Java | 3 | |
 | C# | 3 | |
 | Python | 4 | Checkers and analysis |

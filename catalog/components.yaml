@@ -598,6 +598,16 @@ components:
     framework: libbpf
     design: docs/design/harness.md
 
+  - id: cost-meter
+    name: Cost meter (expected and live cost per hour, data movement per load plan)
+    line: harness
+    kind: platform
+    status: planned
+    fidelity: F0
+    target: {phase: 5, fidelity: F2}
+    language: rust
+    design: docs/design/harness.md
+
   # Lab
   - id: raft-config-service
     name: Raft config and lock service
@@ -644,6 +654,7 @@ infrastructure:
   - {id: otel-collector, name: OpenTelemetry Collector, kind: observability, licence: Apache-2.0}
   - {id: prometheus, name: Prometheus, kind: observability, licence: Apache-2.0}
   - {id: grafana-stack, name: Grafana, Tempo and Loki, kind: observability, licence: AGPL-3.0}
+  - {id: opencost, name: OpenCost, kind: observability, licence: Apache-2.0}
   - {id: chaos-mesh, name: Chaos Mesh, kind: testing, licence: Apache-2.0}
   - {id: toxiproxy, name: Toxiproxy, kind: testing, licence: MIT}
   - {id: k6, name: Grafana k6, kind: testing, licence: AGPL-3.0}
