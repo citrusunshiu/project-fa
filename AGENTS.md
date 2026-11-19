@@ -6,12 +6,20 @@ Conventions for anyone changing this repository, human or AI agent.
 
 The [README](README.md), the [charter](docs/charter.md) and the [catalog](catalog/components.yaml). The catalog is the source of truth for what exists: if a document disagrees with it, fix the document or the catalog in the same change.
 
+## Issues
+
+- Issues for all four repositories (this one and the web, Android and iOS clients) are filed here, so one list holds the whole project.
+- One deliverable per issue. The body has the work-item form's parts: **What**, **Why**, **Done when** and **Links**. Readers' issues use the question and correction forms.
+- Labels: one `kind:` label; a `slice:` label for each slice it touches; and `needs-ruling`, `blocked` or `agent-ready` when they apply. A `blocked` issue names what it waits on in a comment. The milestone is the roadmap phase.
+- `uv run tools/sync_tracker.py --apply` keeps the labels and milestones in line with `.github/labels.yml`, the catalog's slices and the charter's phases. Run it after changing any of them.
+- Issues are closed, not deleted: as completed by their pull request, or as not planned with a comment saying why. Only the maintainer's account can delete an issue, and only after a leak ([leak response](docs/leak-response.md)).
+
 ## How changes land
 
 - Work starts from a GitHub issue.
 - Each change goes on its own branch and lands on `main` as a squash-merged pull request with green checks. The pull request title becomes the commit's subject on `main` and the pull request body becomes its body, so both are written as a commit message.
 - **Title:** `type(scope): summary`, in [Conventional Commits](https://www.conventionalcommits.org/) form. The type is one of `feat`, `fix`, `perf`, `refactor`, `test`, `docs`, `build`, `ci`, `chore` or `revert`. The scope is optional: a catalog component id (`ledger`), a slice (`checkout-and-payments`), or one of `adr`, `catalog`, `platform`, `infra`, `load`, `chaos`, `sim`, `tools`. A `!` before the colon marks a breaking change to a published contract. CI checks the form.
-- **Body:** what changed and why, then the issue link in its own paragraph: `Closes #N`, or `Refs #N` when the issue stays open (`Refs citrusunshiu/project-fa#N` from a client repository). The squash commit carries the link, so the issue's timeline shows the commit that closed it.
+- **Body:** what changed and why, then the issue link in its own paragraph: `Closes #N`, or `Refs #N` when the issue stays open. From a client repository, write `Closes citrusunshiu/project-fa#N` or `Refs citrusunshiu/project-fa#N`. The squash commit carries the link, so the issue's timeline shows the commit that closed it.
 - **Agent trailers:** when an AI agent helped, the body ends with one paragraph of trailers, with no blank lines inside it:
   - `Co-Authored-By:` the agent's own default line, such as `Claude Opus 5.5 <noreply@anthropic.com>` or `Codex <noreply@openai.com>`. GitHub shows it as a co-author.
   - `Assisted-by: <agent>:<model>`, the form the Linux kernel uses, such as `claude-code:claude-opus-5-5` or `codex-cli:gpt-6.1-sol`.

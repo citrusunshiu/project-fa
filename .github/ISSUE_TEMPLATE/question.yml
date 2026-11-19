@@ -1,0 +1,22 @@
+name: Question or challenge
+description: Ask about a design or a decision, or challenge one with evidence.
+labels: ["kind:question"]
+body:
+  - type: input
+    id: subject
+    attributes:
+      label: Which document or decision
+      description: A link or a path, such as docs/adr/0007-kafka-log-nats-fan-out-rabbitmq-work-queues.md.
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Question or challenge
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: For a challenge, what would change the decision. Each decision record says what that would be.

@@ -1,6 +1,6 @@
 # Contributing
 
-This is a personal study project, so outside code contributions aren't solicited. Issues are welcome:
+This is a personal study project, so outside code contributions aren't solicited. Issues are welcome, here for all four repositories, through the question and correction forms:
 
 - a question about a design or a decision;
 - a challenge to a decision record, ideally with the evidence that would change it (each record says what that would be);

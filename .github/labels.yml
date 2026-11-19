@@ -1,0 +1,17 @@
+# Fixed labels for the issue tracker. tools/sync_tracker.py applies them, adds a slice:<name>
+# label for each slice in the catalog, and a milestone for each roadmap phase in the charter.
+slice_color: "bfd4f2"
+labels:
+  - {name: "kind:decision", color: "5319e7", description: "Propose, rule on or supersede a decision record"}
+  - {name: "kind:design", color: "1d76db", description: "Write or revise a slice design doc"}
+  - {name: "kind:build", color: "0e8a16", description: "Build or change code, infrastructure or tooling"}
+  - {name: "kind:experiment", color: "fbca04", description: "Run an experiment and publish its report"}
+  - {name: "kind:reading", color: "c5def5", description: "A reading note that changes something"}
+  - {name: "kind:gameday", color: "d93f0b", description: "A game day or a postmortem"}
+  - {name: "kind:bug", color: "b60205", description: "Something built doesn't do what its doc says"}
+  - {name: "kind:chore", color: "ededed", description: "Repository upkeep"}
+  - {name: "kind:question", color: "cc317c", description: "A question about, or a challenge to, a design or a decision"}
+  - {name: "kind:correction", color: "f9d0c4", description: "A wrong number, a broken link or a misread source"}
+  - {name: "needs-ruling", color: "d876e3", description: "Waits on a decision by the maintainer"}
+  - {name: "blocked", color: "000000", description: "Waits on something a comment names"}
+  - {name: "agent-ready", color: "c2e0c6", description: "Specified well enough for an agent to start without asking"}

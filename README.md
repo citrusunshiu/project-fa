@@ -53,7 +53,7 @@ catalog/             components.yaml, the source of truth for what exists
 tools/               the checks CI runs on every change
 ```
 
-Later phases add `sim/`, `services/`, `templates/`, `platform/`, `load/`, `chaos/`, `lab/` and `infra/`. The web, Android and iOS clients will live in their own repositories.
+Later phases add `sim/`, `services/`, `templates/`, `platform/`, `load/`, `chaos/`, `lab/` and `infra/`. The web, Android and iOS clients live in their own repositories: [project-fa-web](https://github.com/citrusunshiu/project-fa-web), [project-fa-android](https://github.com/citrusunshiu/project-fa-android) and [project-fa-ios](https://github.com/citrusunshiu/project-fa-ios). Issues for all four are filed here.
 
 ## How it's made
 

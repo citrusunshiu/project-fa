@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Something here shouldn't be public
+    url: https://github.com/citrusunshiu/project-fa/security/advisories/new
+    about: A credential or personal information in a file, the history or an issue. Report it privately, as SECURITY.md describes, and don't quote it in an issue.

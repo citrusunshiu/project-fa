@@ -1,0 +1,29 @@
+name: Work item
+description: One piece of work for the maintainer or an agent. Readers, please use a question or a correction instead.
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: The one deliverable, such as a decision record, a design doc, a component at a fidelity level, an experiment report or a fix.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What it unblocks or answers.
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: Checks a reviewer can confirm from the pull request alone.
+    validations:
+      required: true
+  - type: textarea
+    id: links
+    attributes:
+      label: Links
+      description: The charter phase, design docs, decision records, catalog components and issues it touches.
