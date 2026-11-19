@@ -13,5 +13,5 @@ labels:
   - {name: "kind:question", color: "cc317c", description: "A question about, or a challenge to, a design or a decision"}
   - {name: "kind:correction", color: "f9d0c4", description: "A wrong number, a broken link or a misread source"}
   - {name: "needs-ruling", color: "d876e3", description: "Waits on a decision by the maintainer"}
-  - {name: "blocked", color: "000000", description: "Waits on something a comment names"}
+  - {name: "blocked", color: "000000", description: "Waits on something outside the tracker, named in a comment"}
   - {name: "agent-ready", color: "c2e0c6", description: "Specified well enough for an agent to start without asking"}

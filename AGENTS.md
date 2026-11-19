@@ -10,7 +10,7 @@ The [README](README.md), the [charter](docs/charter.md) and the [catalog](catalo
 
 - Issues for all four repositories (this one and the web, Android and iOS clients) are filed here, so one list holds the whole project.
 - One deliverable per issue. The body has the work-item form's parts: **What**, **Why**, **Done when** and **Links**. Readers' issues use the question and correction forms.
-- Labels: one `kind:` label; a `slice:` label for each slice it touches; and `needs-ruling`, `blocked` or `agent-ready` when they apply. A `blocked` issue names what it waits on in a comment. The milestone is the roadmap phase.
+- Labels: one `kind:` label; a `slice:` label for each slice it touches; and `needs-ruling`, `blocked` or `agent-ready` when they apply. An issue that waits on another issue records it as a dependency ("blocked by"), not a label; `blocked` is for waiting on something outside the tracker, named in a comment. A larger piece of work is a parent issue with sub-issues. The milestone is the roadmap phase.
 - `uv run tools/sync_tracker.py --apply` keeps the labels and milestones in line with `.github/labels.yml`, the catalog's slices and the charter's phases. Run it after changing any of them.
 - Issues are closed, not deleted: as completed by their pull request, or as not planned with a comment saying why. Only the maintainer's account can delete an issue, and only after a leak ([leak response](docs/leak-response.md)).
 
