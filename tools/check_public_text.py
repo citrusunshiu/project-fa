@@ -7,7 +7,7 @@
 Generic patterns live here. Exact private terms never do: they come from a git-ignored
 .public-text-denylist file and from the PUBLIC_TEXT_DENYLIST environment variable (one term per line).
 
-Usage: check_public_text.py [--commits <range>] [--text <file> ...]
+Usage: check_public_text.py [--repo <path>] [--commits <range>] [--text <file> ...]
 """
 import argparse
 import os
@@ -45,19 +45,21 @@ def findings(text: str, terms: list[str]) -> list[str]:
     return out
 
 
-def git(*args: str) -> str:
-    return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+def git(repo: pathlib.Path, *args: str) -> str:
+    return subprocess.run(["git", *args], cwd=repo, capture_output=True, text=True, check=True).stdout
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--repo", type=pathlib.Path, default=ROOT, help="check this repository instead of the one holding this script; private terms still load from this one")
     ap.add_argument("--commits", help="also check the messages of commits in this range, e.g. origin/main..HEAD")
     ap.add_argument("--text", action="append", default=[], help="also check this file, e.g. a pull request's title and body")
     a = ap.parse_args()
     terms = private_terms()
+    repo = pathlib.Path(git(a.repo, "rev-parse", "--show-toplevel").strip())
     errors = []
-    for name in git("ls-files", "-co", "--exclude-standard").split("\n"):
-        path = ROOT / name
+    for name in git(repo, "ls-files", "-co", "--exclude-standard").split("\n"):
+        path = repo / name
         if not name or not path.is_file() or name == ".public-text-denylist":
             continue
         try:
@@ -68,8 +70,8 @@ def main() -> int:
             for label in findings(line, terms):
                 errors.append(f"{name}:{lineno}: {label}")
     if a.commits:
-        for sha in git("rev-list", a.commits).split():
-            meta = git("show", "-s", "--format=%an <%ae>%n%cn <%ce>%n%B", sha)
+        for sha in git(repo, "rev-list", a.commits).split():
+            meta = git(repo, "show", "-s", "--format=%an <%ae>%n%cn <%ce>%n%B", sha)
             for label in findings(meta, terms):
                 errors.append(f"commit {sha[:12]}: {label}")
     for name in a.text:
@@ -78,7 +80,7 @@ def main() -> int:
                 errors.append(f"{pathlib.Path(name).name}:{lineno}: {label}")
     for e in sorted(set(errors)):
         print(f"error: {e}")
-    print(f"public text: {len(terms)} private terms loaded; {len(set(errors))} errors")
+    print(f"public text: {repo.name}: {len(terms)} private terms loaded; {len(set(errors))} errors")
     return 1 if errors else 0
 
 
