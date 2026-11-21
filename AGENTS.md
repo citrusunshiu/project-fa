@@ -6,9 +6,11 @@ Conventions for anyone changing this repository, human or AI agent.
 
 The [README](README.md), the [charter](docs/charter.md) and the [catalog](catalog/components.yaml). The catalog is the source of truth for what exists: if a document disagrees with it, fix the document or the catalog in the same change.
 
+Agents also read their working memory in [project-fa-agents](https://github.com/citrusunshiu/project-fa-agents) ([ADR-0012](docs/adr/0012-agent-working-memory-in-public.md)). Keep a clone of it on `main` beside this repository, and read its `AGENTS.md` and `context/active.md` before starting. A change that updates the memory is a second pull request there, linked both ways and merged after this one.
+
 ## Issues
 
-- Issues for all four repositories (this one and the web, Android and iOS clients) are filed here, so one list holds the whole project.
+- Issues for every repository in the project (this one, the web, Android and iOS clients, and the agents' memory) are filed here, so one list holds the whole project.
 - One deliverable per issue. The body has the work-item form's parts: **What**, **Why**, **Done when** and **Links**. Readers' issues use the question and correction forms.
 - Labels: one `kind:` label; a `slice:` label for each slice it touches; and `needs-ruling`, `blocked` or `agent-ready` when they apply. An issue that waits on another issue records it as a dependency ("blocked by"), not a label; `blocked` is for waiting on something outside the tracker, named in a comment. A larger piece of work is a parent issue with sub-issues. The milestone is the roadmap phase.
 - Agents take open issues labelled `agent-ready` that have no open pull request. Opening a draft pull request that closes the issue claims it. The project board then moves the issue to In progress by itself; nobody sets the board's status by hand.

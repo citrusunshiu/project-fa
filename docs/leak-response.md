@@ -1,6 +1,6 @@
 # When private text gets in
 
-The checks in [ADR-0010](adr/0010-licence-and-public-text-policy.md) try to stop private text before it's pushed. This page is for when something gets through anyway: into a commit, a pull request, an issue, a comment or the agents' memory ([ADR-0012](adr/0012-agent-working-memory-in-public.md)). If you aren't the maintainer and you've found something, report it privately as [SECURITY.md](../SECURITY.md) says, and don't quote it in public.
+The checks in [ADR-0010](adr/0010-licence-and-public-text-policy.md) try to stop private text before it's pushed. This page is for when something gets through anyway: into a commit, a pull request, an issue, a comment or the agents' memory in [project-fa-agents](https://github.com/citrusunshiu/project-fa-agents) ([ADR-0012](adr/0012-agent-working-memory-in-public.md)). If you aren't the maintainer and you've found something, report it privately as [SECURITY.md](../SECURITY.md) says, and don't quote it in public.
 
 ## The rule underneath
 
@@ -24,7 +24,7 @@ Anything that reached the public repository, even for a minute, may already be c
 | A pushed branch or an open pull request | Everyone | Close the pull request and delete the branch, then push the fixed work on a new branch. The old commits stay reachable by their hash and through the closed pull request, which only GitHub Support can remove; ask them when the content matters |
 | `main` | Everyone, and every clone | Push a fix that removes it the same day. When it matters, also [rewrite history](#rewriting-history-on-main) |
 | A pull request title or body, an issue or a comment | Everyone, and everyone notified by email | Edit the text out. For a comment, also delete the old revision from its edit history; the edit's author and time stay visible, but its content doesn't. A renamed title stays in the timeline, so a leaked title means deleting the issue, or asking GitHub Support about a pull request. Only the maintainer's account can delete an issue, and nobody but Support can delete a pull request. A merged pull request's title and body are also the squash commit's message on `main`, so the row above applies too |
-| The agents' memory under `.agents/` | As for `main` or a branch | As above, fixing `main` first, because agents load memory only from `main`. Then search the handoffs and skills for copies of the same text, and restart any agent that loaded it |
+| The agents' memory in project-fa-agents | As for `main` or a branch | As above, in that repository, fixing its `main` first, because agents load memory only from `main`. Then search the handoffs and skills for copies of the same text, and restart any agent that loaded it. A history rewrite there leaves the other repositories' commit hashes alone |
 
 ### Rewriting history on main
 
@@ -42,7 +42,7 @@ It costs something: every commit hash after the leak changes, so links to commit
 ## Afterwards: leave a check behind
 
 - In the same change as the fix, add a pattern to `tools/check_public_text.py`, or the term to the private list (the local file and the CI secret), and confirm it catches the original text. A slip that only a reader could catch gets a rule in [AGENTS.md](../AGENTS.md) or a skill instead.
-- Record the class in `.agents/context/lessons.md`: what kind of text it was, the path it took, which check missed it and why, and the new check. Never repeat the leaked text there, in the fix's commit message or pull request, or anywhere else public.
+- Record the class in `context/lessons.md` in project-fa-agents: what kind of text it was, the path it took, which check missed it and why, and the new check. Never repeat the leaked text there, in the fix's commit message or pull request, or anywhere else public.
 - The details (exactly what leaked, where, and the Support ticket) stay with the maintainer, outside the repository.
 
 ## Why most of the work comes before the push
@@ -52,8 +52,8 @@ Removal can't recall anything, so the checks that count run before text is publi
 - The pre-push hook runs TruffleHog and the public-text check on every commit it pushes.
 - Text posted to GitHub (pull request titles and bodies, issues and comments) is written to a file, checked with `tools/check_public_text.py --text <file>`, and then posted from the file (`gh pr create --body-file`). CI's check of a pull request's title and body runs after the pull request is already public, so it's a backstop, not the guard.
 - Once the repository is public, GitHub's push protection blocks known secret formats on GitHub's side, before a push lands.
-- A change under `.agents/` gets a cold read before it's pushed. An agent started without the private context reads only the diff, and flags anything about a person, another project or a place. The term list can't catch a private fact written in new words, and memory is where an agent that has seen private context is most likely to write one.
-- The maintainer reviews and merges every change under `.agents/`.
+- A change to the agents' memory gets a cold read before it's pushed. An agent started without the private context reads only the diff, and flags anything about a person, another project or a place. The term list can't catch a private fact written in new words, and memory is where an agent that has seen private context is most likely to write one.
+- The maintainer reviews and merges every change to the agents' memory.
 
 The public-text check prints only a label such as `private term`, never the text it matched, so a failing check in CI doesn't publish what it found.
 
@@ -61,5 +61,5 @@ The public-text check prints only a label such as `private term`, never the text
 
 - Run the public-text check and TruffleHog over the whole history.
 - Turn on secret scanning and push protection.
-- Set the `PUBLIC_TEXT_DENYLIST` secret, so CI loads the private terms.
+- Set the `PUBLIC_TEXT_DENYLIST` secret in each repository that runs the check, so CI loads the private terms.
 - Turn on private vulnerability reporting, which [SECURITY.md](../SECURITY.md) points to.

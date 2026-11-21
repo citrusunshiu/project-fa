@@ -1,7 +1,7 @@
 # ADR-0012: Keep the agents' working memory in public
 
 - **Status:** Proposed
-- **Date:** 2026-11-06
+- **Date:** 2026-11-06, revised 2026-11-21 to choose Option D
 - **Decided by:** maintainer (pending)
 - **Drafted by:** maintainer with an AI agent
 
@@ -26,55 +26,57 @@ Safe. But it hides the process that working in public is meant to show, and agen
 
 Impossible: the deny-list and the identifiers have to stay private.
 
-### Option C: Public working memory in this repository, with a small private remainder
+### Option C: Public working memory in the hub, with a small private remainder
 
-The working state, procedures and agent roster live here and go through the same pull requests, checks and review as the work they describe. The private remainder stays outside the repository and in git-ignored local files.
+A `.agents/` directory in this repository holds the working state, procedures and agent roster, and they go through the same pull requests, checks and review as the work they describe. A memory update lands in the same pull request as hub work, and agent tools find the skills without any setup. But the clients' agents read it from a second checkout anyway. A serious leak in memory means rewriting this repository's history, which changes every commit hash after it and breaks the links to them from reports, records and issues. And the memory goes public on the same day as the hub.
 
-### Option D: A separate public repository for memory, spanning all four
+### Option D: A separate public repository for memory, spanning all four, with a small private remainder
 
-A neutral home that no one repository owns, with a history of its own, so the memory's evolution is easy to read by itself. But no memory update lands in the same pull request as the work it describes, in any of the four repositories, so memory trails the work everywhere instead of only in the clients. It needs its own copy of the checks and its own access rules. And it would sit beside the hub, which already holds what spans the repositories: the catalog, the decision records, the design docs and these conventions.
+The same files in their own repository. No code repository owns it, so it serves all four on equal terms. A serious leak in memory is fixed by rewriting that repository's history alone, so the hub's commit links stay intact; memory is where an agent that has seen private context is most likely to write a private fact. Its history reads by itself, and memory churn stays out of the code's diffs. It can go public on its own schedule. The costs: a change that updates memory takes two pull requests, agents keep a second clone, the skills need linking into each checkout, and the repository needs its own copy of the checks.
 
 ## Decision
 
-Option C. A `.agents/` directory holds:
+Option D. The repository [project-fa-agents](https://github.com/citrusunshiu/project-fa-agents) holds:
 
 - `context/active.md`: where the project stands. The phase, what's in flight, the next steps and the open questions. It's kept short and rewritten, never appended to.
 - `context/progress.md`: what's done in each phase, linked to pull requests, experiment reports and decision records.
 - `context/lessons.md`: each class of defect found, and the check that now prevents it.
 - `seats.md`: which agents, models and effort levels do which kinds of work. It's the source for the commit trailers in [AGENTS.md](../../AGENTS.md).
 - `handoffs/`: the prompts agents work from, each linked to its issues.
-- `skills/<name>/SKILL.md`: procedures for recurring tasks. Examples: write a slice design doc, run an experiment, propose a decision record, move a component up the fidelity ladder, open a pull request, update this memory. They use the Agent Skills format, which Codex reads from `.agents/skills`; `.claude/skills` is a link to the same directory.
+- `skills/<name>/SKILL.md`: procedures for recurring tasks, the clients' platform skills included, so every procedure lives in one place. Examples: write a slice design doc, run an experiment, propose a decision record, move a component up the fidelity ladder, open a pull request, update the memory. They use the Agent Skills format.
 
-**Across the four repositories.** The hub's `.agents/` is the one memory for the project. Each client repository adds only what's specific to it: an `AGENTS.md` with its build and test commands, and skills for its platform in its own `.agents/skills/`. Agents working on a client read the hub's memory from a checkout of its `main` beside the client's, which they need anyway for the design docs and the contracts the client calls. Until Phase 8, nearly all the work is in the hub.
+**How agents use it.** An agent keeps a clone of project-fa-agents on `main` beside the repository it works in, and reads that repository's `AGENTS.md` and `context/active.md` before it starts. Each code repository keeps only its own `AGENTS.md`, with its build and test commands and its conventions, and says where the memory is. The skills are linked into each checkout and worktree as `.agents/skills`, where Codex looks, and `.claude/skills`, where Claude Code looks. The links are local and git-ignored.
 
 These rules come with it:
 
-- A memory update goes in the same pull request as the work it describes. For work in a client repository, it goes in a hub pull request that links to the client's, and the client's links back.
-- The public-text check and the secret scan cover `.agents/` like every other path. A change under `.agents/` also gets a cold read before it's pushed, by an agent started without the private context. [Leak response](../leak-response.md) covers both, and what happens when something gets through anyway.
-- Agents load memory and skills only from `main`. Only the maintainer merges a change under `.agents/`, and a pull request touching it from anyone other than the maintainer or the agents' GitHub App is closed unmerged.
+- A change that updates memory is two pull requests: the work in its own repository, and the memory update in project-fa-agents. Each links to the other, and the memory update merges after the work. A change to memory alone, such as a new skill, is one pull request.
+- project-fa-agents runs the same public-text check and secret scan as the hub. Every change to it also gets a cold read before it's pushed, by an agent started without the private context. [Leak response](../leak-response.md) covers both, and what happens when something gets through anyway.
+- Agents load memory and skills only from `main`. Only the maintainer merges in project-fa-agents, and a pull request there from anyone other than the maintainer or the agents' GitHub App is closed unmerged.
 - Text from issues, pull request comments or other outside sources is never copied into memory as an instruction. Memory records the maintainer's decisions and the agents' findings, with links to where they came from.
 - Memory never records personal details, other projects, employers, infrastructure identifiers or session links.
+- Issues about the memory are filed in the hub, like every other issue.
 
 ## Lab stance and production stance
 
-- **Lab stance:** the process becomes inspectable. A reader can see what the agents were told, what they knew and how that context changed with each result. Any agent launched in a clone has what it needs.
+- **Lab stance:** the process becomes inspectable. A reader can see what the agents were told, what they knew and how that context changed with each result. Any agent launched in a clone of the hub and project-fa-agents has what it needs.
 - **Production stance:** teams already keep agent instructions in the repository (instruction files, rules, skills). Operational memory that holds customer or incident details goes in access-controlled systems. The same split by sensitivity applies here, with a different line.
 
 ## Consequences
 
 - There are two places to update, with a rule for which gets what. The private remainder should stay small and change rarely.
-- Memory is now an attack surface. Main-only loading and maintainer-only merges under `.agents/` are the defence.
-- A leak in memory is as public as any other, and as hard to recall. [Leak response](../leak-response.md) says what removal can and can't do.
-- Nearly every pull request touches `context/active.md`. Keeping the files short keeps the diffs readable.
+- Memory is now an attack surface. Main-only loading and maintainer-only merges in project-fa-agents are the defence.
+- A leak in memory is as public as any other, and as hard to recall. [Leak response](../leak-response.md) says what removal can and can't do. Rewriting history to remove one touches only project-fa-agents.
+- Memory trails the work between the two merges. The memory pull request names the work's pull request, so the gap is visible.
+- project-fa-agents carries a copy of the public-text check, which has to stay the same as the hub's.
 - Readers see unfinished thinking and wrong predictions. That's what working in public means here. Personal self-assessment still isn't recorded.
 
 ## What would change my mind
 
 - A leak the public-text check missed. The kind of content that leaked moves to the private remainder, and a new check covers it.
 - Memory diffs crowding out review. Progress then moves into pull request descriptions, and only `context/active.md` stays.
-- Client work dominating memory changes from Phase 8 on, or the paired pull requests becoming a chore. Then `.agents/` moves to its own repository. `git filter-repo --subdirectory-filter .agents` carries its history across, so starting in the hub doesn't close that door.
+- The paired pull requests becoming a chore, or memory routinely trailing the work by more than a day. Then the memory moves into the hub's `.agents/`. `git filter-repo --to-subdirectory-filter .agents` carries its history across, so starting separate doesn't close that door.
 
 ## How we'd know
 
 - Nothing private ever reaches `main`, and each catch on a pull request is recorded in `context/lessons.md`.
-- At each phase boundary, an agent launched cold in a fresh clone can state the current phase, the next step and the open questions from `.agents/` alone.
+- At each phase boundary, an agent launched cold in a fresh clone can state the current phase, the next step and the open questions from project-fa-agents alone.

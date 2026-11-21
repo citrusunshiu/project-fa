@@ -4,6 +4,9 @@
 # Each maintainer's local agent settings and private context (ADR-0012)
 CLAUDE.local.md
 .claude/settings.local.json
+# Links to the skills in project-fa-agents, made locally
+.agents/
+.claude/skills
 
 # Never commit state, credentials or local environment files
 *.tfstate
