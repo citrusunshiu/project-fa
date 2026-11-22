@@ -23,3 +23,5 @@
 /.gitignore @citrusunshiu
 /tools/check.sh @citrusunshiu
 /tools/check_*.py @citrusunshiu
+/tools/post_checked.py @citrusunshiu
+/tools/test_post_checked.py @citrusunshiu
