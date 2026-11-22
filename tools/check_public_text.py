@@ -26,7 +26,8 @@ PATTERNS = {
 }
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
 ALLOWED_EMAIL_SUFFIXES = ("@users.noreply.github.com", "@example.com", "@example.org")
-ALLOWED_EMAILS = {"noreply@anthropic.com", "noreply@openai.com"}
+# GitHub commits squash merges made on github.com as noreply@github.com.
+ALLOWED_EMAILS = {"noreply@anthropic.com", "noreply@openai.com", "noreply@github.com"}
 
 
 def main_checkout() -> pathlib.Path:
