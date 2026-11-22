@@ -6,9 +6,11 @@
 
 Usage: post_checked.py <file> [<file> ...] -- <command> [<arg> ...]
 
-Every file before `--` is checked with check_public_text.py, and so is the value of any --title or -t
-in the command. The command runs only when the check passes; otherwise nothing runs and the exit code
-is 1. Post from the same files you pass here, such as `gh issue create --title ... --body-file <file>`.
+Every file before `--` is checked with check_public_text.py, and so is any title in the command
+(--title, -t). The command runs only when the check passes; otherwise nothing runs and the exit code
+is 1. It fails closed on text it can't check: an inline body (--body, -b), a body file that isn't one
+of the checked files (--body-file, -F), and `gh api` fields (-f, -F, --field, --raw-field), which
+must come from a checked file through --input instead.
 """
 import os
 import pathlib
@@ -20,14 +22,45 @@ HERE = pathlib.Path(__file__).resolve().parent
 USAGE = "usage: post_checked.py <file> [<file> ...] -- <command> [<arg> ...]"
 
 
-def titles(command: list[str]) -> list[str]:
-    out = []
+class Refused(Exception):
+    pass
+
+
+def value(command: list[str], i: int, arg: str, short: str, long: str) -> str | None:
+    """The value of `arg` when it is the option short/long in any form gh accepts, else None."""
+    if arg in (short, long):
+        if i + 1 >= len(command):
+            raise Refused(f"{arg} has no value")
+        return command[i + 1]
+    if arg.startswith(long + "="):
+        return arg[len(long) + 1:]
+    if short and arg.startswith(short) and len(arg) > len(short) and not arg.startswith("--"):
+        return arg[len(short):].removeprefix("=")
+    return None
+
+
+def inspect(command: list[str], checked: set[pathlib.Path]) -> list[str]:
+    """Return the titles to check, or raise Refused for text that can't be checked."""
+    is_api = len(command) > 1 and pathlib.Path(command[0]).name == "gh" and command[1] == "api"
+    titles = []
     for i, arg in enumerate(command):
-        if arg in ("--title", "-t") and i + 1 < len(command):
-            out.append(command[i + 1])
-        elif arg.startswith("--title="):
-            out.append(arg.split("=", 1)[1])
-    return out
+        if is_api:
+            for short, long in (("-f", "--raw-field"), ("-F", "--field")):
+                if value(command, i, arg, short, long) is not None:
+                    raise Refused("gh api fields can carry text; pass a checked file with --input")
+            path = value(command, i, arg, "", "--input")
+            if path is not None and pathlib.Path(path).resolve() not in checked:
+                raise Refused(f"--input {path} isn't one of the checked files")
+            continue
+        title = value(command, i, arg, "-t", "--title")
+        if title is not None:
+            titles.append(title)
+        if value(command, i, arg, "-b", "--body") is not None:
+            raise Refused("an inline body can't be checked; write it to a file and use --body-file")
+        path = value(command, i, arg, "-F", "--body-file")
+        if path is not None and pathlib.Path(path).resolve() not in checked:
+            raise Refused(f"--body-file {path} isn't one of the checked files")
+    return titles
 
 
 def main(argv: list[str]) -> int:
@@ -43,12 +76,16 @@ def main(argv: list[str]) -> int:
         if not pathlib.Path(name).is_file():
             print(f"post_checked: {name} is not a file, so nothing was posted", file=sys.stderr)
             return 1
+    try:
+        titles = inspect(command, {pathlib.Path(f).resolve() for f in files})
+    except Refused as why:
+        print(f"post_checked: {why}, so nothing was posted", file=sys.stderr)
+        return 1
     with tempfile.TemporaryDirectory() as tmp:
         texts = list(files)
-        found = titles(command)
-        if found:
+        if titles:
             title = pathlib.Path(tmp) / "title.txt"
-            title.write_text("\n".join(found) + "\n")
+            title.write_text("\n".join(titles) + "\n")
             texts.append(str(title))
         check = [sys.executable, str(HERE / "check_public_text.py")]
         for name in texts:
@@ -56,8 +93,11 @@ def main(argv: list[str]) -> int:
         if subprocess.run(check).returncode != 0:
             print("post_checked: the public-text check failed, so nothing was posted", file=sys.stderr)
             return 1
-    os.execvp(command[0], command)
-    return 1  # not reached
+    try:
+        os.execvp(command[0], command)
+    except OSError as error:
+        print(f"post_checked: couldn't run {command[0]}: {error.strerror}", file=sys.stderr)
+    return 1
 
 
 if __name__ == "__main__":
