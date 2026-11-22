@@ -2,9 +2,14 @@
 # requires-python = ">=3.12"
 # dependencies = []
 # ///
-"""Shows that post_checked.py runs the command only when the public-text check passes."""
+"""Shows that post_checked.py runs the command only when the public-text check passes.
+
+A fake gh on PATH stands in for the real one, so nothing here can post anything.
+"""
 import os
 import pathlib
+import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -15,95 +20,118 @@ TOOL = pathlib.Path(__file__).resolve().parent / "post_checked.py"
 TERM = "-".join(["planted", "private", "term"])
 
 
-def run(*args: str) -> subprocess.CompletedProcess:
-    return subprocess.run([sys.executable, str(TOOL), *args], capture_output=True, text=True,
-                          env=dict(os.environ, PUBLIC_TEXT_DENYLIST=TERM))
-
-
 class PostChecked(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.dir = pathlib.Path(self.tmp.name)
         self.marker = self.dir / "posted"
-        self.post = [sys.executable, "-c", f"open({str(self.marker)!r}, 'w').close()"]
+        bin_dir = self.dir / "bin"
+        bin_dir.mkdir()
+        for name in ("gh", "notgh"):  # notgh would post too, if anything but gh were allowed
+            fake = bin_dir / name
+            fake.write_text(f"#!/bin/sh\ntouch {self.marker}\n")
+            fake.chmod(fake.stat().st_mode | stat.S_IEXEC)
+        self.env = dict(os.environ, PUBLIC_TEXT_DENYLIST=TERM, PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+        self.body = self.text("Clean body.\n")
 
     def tearDown(self):
         self.tmp.cleanup()
 
-    def text(self, body: str) -> str:
-        path = self.dir / "body.md"
+    def run_tool(self, *args, env=None):
+        return subprocess.run([sys.executable, str(TOOL), *args], capture_output=True, text=True, env=env or self.env)
+
+    def text(self, body, name="body.md"):
+        path = self.dir / name
         path.write_text(body)
         return str(path)
 
+    def refused(self, *command, files=None):
+        result = self.run_tool(*(files or [self.body]), "--", *command)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("nothing was posted", result.stderr)
+        self.assertFalse(self.marker.exists())
+        return result
+
     def test_clean_text_is_posted(self):
-        result = run(self.text("A plain description.\n"), "--", *self.post)
+        result = self.run_tool(self.body, "--", "gh", "issue", "create", "--title", "Clean", "--body-file", self.body)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(self.marker.exists())
 
     def test_a_failing_body_posts_nothing(self):
-        result = run(self.text(f"Mentions {TERM} here.\n"), "--", *self.post)
-        self.assertEqual(result.returncode, 1)
+        bad = self.text(f"Mentions {TERM} here.\n", "bad.md")
+        result = self.refused("gh", "issue", "create", "--title", "Clean", "--body-file", bad, files=[bad])
         self.assertIn("private term", result.stdout)
-        self.assertIn("nothing was posted", result.stderr)
-        self.assertFalse(self.marker.exists())
 
     def test_a_failing_title_posts_nothing_in_any_form(self):
         for flag in (["--title", f"about {TERM}"], ["-t", TERM], [f"--title={TERM}"], [f"-t{TERM}"], [f"-t={TERM}"]):
             with self.subTest(flag=flag):
-                result = run(self.text("Clean body.\n"), "--", *self.post, *flag)
-                self.assertEqual(result.returncode, 1)
+                result = self.refused("gh", "pr", "create", *flag, "--body-file", self.body)
                 self.assertIn("private term", result.stdout)
-                self.assertFalse(self.marker.exists())
+        result = self.refused("gh", "pr", "merge", "7", "--squash", "--subject", TERM, "--body-file", self.body)
+        self.assertIn("private term", result.stdout)
 
     def test_a_check_that_errors_posts_nothing(self):
         undecodable = self.dir / "binary.md"
         undecodable.write_bytes(b"\xff\xfe\x00 not utf-8 \xc3\x28")
-        result = run(str(undecodable), "--", *self.post)
+        result = self.run_tool(str(undecodable), "--", "gh", "issue", "create", "--body-file", str(undecodable))
         self.assertNotEqual(result.returncode, 0)
         self.assertNotIn("private term", result.stdout)
         self.assertFalse(self.marker.exists())
 
     def test_text_it_cannot_check_is_refused(self):
-        body = self.text("Clean body.\n")
-        other = self.dir / "other.md"
-        other.write_text("Not passed to the check.\n")
-        cases = [["--body", "inline"], ["-b", "inline"], ["--body=inline"], ["-binline"],
-                 ["--body-file", str(other)], ["-F", str(other)], [f"--body-file={other}"]]
-        for extra in cases:
+        other = self.text("Not passed to the check.\n", "other.md")
+        for extra in (["--body", "inline"], ["-b", "inline"], ["--body=inline"], ["-binline"],
+                      ["--body-file", other], ["-F", other], [f"--body-file={other}"],
+                      ["-dtTitle"], ["-dt", "Title"], ["-db", "inline"], ["-dF", other]):
             with self.subTest(extra=extra):
-                result = run(body, "--", *self.post, *extra)
-                self.assertEqual(result.returncode, 1)
-                self.assertIn("nothing was posted", result.stderr)
-                self.assertFalse(self.marker.exists())
-        for extra in (["-f", "body=inline"], ["-F", "body=inline"], ["--field", "body=inline"], ["--raw-field=body=inline"],
-                      ["--input", str(other)]):
-            with self.subTest(api=extra):
-                result = run(body, "--", "gh", "api", "repos/o/r/issues", *extra)
-                self.assertEqual(result.returncode, 1)
-                self.assertIn("nothing was posted", result.stderr)
+                self.refused("gh", "pr", "create", *extra)
+        for extra in (["--comment", "inline"], ["-c", "inline"]):
+            with self.subTest(close=extra):
+                self.refused("gh", "issue", "close", "3", *extra)
+
+    def test_gh_api_takes_text_only_from_a_checked_input(self):
+        other = self.text("Not passed to the check.\n", "other.md")
+        for extra in (["-f", "body=inline"], ["-F", "body=inline"], ["--field", "body=inline"],
+                      ["--raw-field=body=inline"], ["--input", other]):
+            with self.subTest(extra=extra):
+                self.refused("gh", "api", "repos/o/r/issues", *extra)
+        result = self.run_tool(self.body, "--", "gh", "api", "repos/o/r/issues", "--input", self.body)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(self.marker.exists())
+
+    def test_only_supported_gh_commands_run(self):
+        for command in (["notgh", "issue", "create", "--body-file", self.body],
+                        ["env", "gh", "api", "repos/o/r/issues", "-f", "body=inline"], ["sh", "-c", "gh issue create"],
+                        ["gh", "release", "create", "v1", "--notes", "inline"], ["gh", "repo", "edit", "--description", "x"]):
+            with self.subTest(command=command):
+                self.refused(*command)
 
     def test_a_checked_body_file_is_allowed(self):
-        body = self.text("Clean body.\n")
-        for extra in (["--body-file", body], ["-F", body], [f"--body-file={body}"]):
+        for extra in (["--body-file", self.body], ["-F", self.body], [f"--body-file={self.body}"]):
             with self.subTest(extra=extra):
                 self.marker.unlink(missing_ok=True)
-                result = run(body, "--", *self.post, *extra)
+                result = self.run_tool(self.body, "--", "gh", "issue", "comment", "3", *extra)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertTrue(self.marker.exists())
 
     def test_a_missing_file_or_command_posts_nothing(self):
-        missing = run(str(self.dir / "absent.md"), "--", *self.post)
+        missing = self.run_tool(str(self.dir / "absent.md"), "--", "gh", "issue", "create", "--body-file", self.body)
         self.assertEqual(missing.returncode, 1)
         self.assertIn("is not a file", missing.stderr)
-        self.assertEqual(run(self.text("Clean.\n"), "--").returncode, 2)
-        self.assertEqual(run(self.text("Clean.\n"), *self.post).returncode, 2)
+        self.assertEqual(self.run_tool(self.body, "--").returncode, 2)
+        self.assertEqual(self.run_tool(self.body, "gh", "issue", "create").returncode, 2)
         self.assertFalse(self.marker.exists())
 
-    def test_a_command_that_isnt_found_fails_cleanly(self):
-        result = run(self.text("Clean.\n"), "--", "no-such-command-for-post-checked")
+    def test_gh_that_isnt_found_fails_cleanly(self):
+        no_gh = self.dir / "no-gh"  # git, which the check needs, but no gh
+        no_gh.mkdir()
+        (no_gh / "git").symlink_to(shutil.which("git"))
+        env = dict(self.env, PATH=str(no_gh))
+        result = self.run_tool(self.body, "--", "gh", "issue", "create", "--body-file", self.body, env=env)
         self.assertEqual(result.returncode, 1)
         self.assertIn("couldn't run", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
