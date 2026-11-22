@@ -111,6 +111,15 @@ class PostChecked(unittest.TestCase):
                       ["--raw-field=body=inline"], ["--input", other]):
             with self.subTest(extra=extra):
                 self.refused("gh", "api", "repos/o/r/issues", *extra)
+        dash = self.dir / "-"
+        dash.write_text("Clean.\n")
+        cwd = os.getcwd()
+        os.chdir(self.dir)  # even with a checked file named "-" here, "-" means standard input
+        try:
+            self.refused("gh", "api", "repos/o/r/issues", "--input", "-", files=["-"])
+            self.refused("gh", "issue", "create", "--title", "Clean", "--body-file", "-", files=["-"])
+        finally:
+            os.chdir(cwd)
         result = self.run_tool(self.body, "--", "gh", "api", "repos/o/r/issues", "--input", self.body)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(self.marker.exists())

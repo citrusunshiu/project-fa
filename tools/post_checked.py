@@ -7,8 +7,9 @@
 Usage: post_checked.py <file> [<file> ...] -- gh <command> [<arg> ...]
 
 Every file before `--` is checked with check_public_text.py, and so is any title in the command
-(--title, -t, --subject). The command runs only when the check passes; otherwise nothing runs and the
-exit code is 1.
+(--title, -t, --subject). The check also scans every file in the checkout, so a finding anywhere
+blocks every post until it's fixed. The command runs only when the check passes; otherwise nothing
+runs and the exit code is 1, or 2 for a usage error.
 
 It accepts only the gh commands agents post with, each with the flags listed in SPEC below, written
 as separate words (`-t Title` or `--title=Title`, not `-tTitle` or `-dt`). Text comes only through a
@@ -86,7 +87,7 @@ def inspect(command: list[str], checked: set[pathlib.Path]) -> list[str]:
             raise Refused(f"{arg} has no value")
         if kind == TITLE:
             titles.append(given)
-        elif kind == FILE and pathlib.Path(given).resolve() not in checked:
+        elif kind == FILE and (given == "-" or pathlib.Path(given).resolve() not in checked):
             raise Refused(f"{name} {given} isn't one of the checked files")
     return titles
 

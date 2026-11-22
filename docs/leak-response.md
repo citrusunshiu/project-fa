@@ -50,7 +50,7 @@ It costs something: every commit hash after the leak changes, so links to commit
 Removal can't recall anything, so the checks that count run before text is public:
 
 - The pre-push hook runs TruffleHog and the public-text check on every commit it pushes.
-- Text posted to GitHub (pull request titles and bodies, issues and comments) is written to a file, checked with `tools/check_public_text.py --text <file>`, and then posted from the file (`gh pr create --body-file`). CI's check of a pull request's title and body runs after the pull request is already public, so it's a backstop, not the guard.
+- Text posted to GitHub (pull request titles and bodies, issues, comments and reviews) is written to a file and posted through `tools/post_checked.py`, which runs the public-text check on it and on the title and posts only if the check passes. CI's check of a pull request's title and body runs after the pull request is already public, so it's a backstop, not the guard.
 - Once the repository is public, GitHub's push protection blocks known secret formats on GitHub's side, before a push lands.
 - A change to the agents' memory gets a cold read before it's pushed. An agent started without the private context reads only the diff, and flags anything about a person, another project or a place. The term list can't catch a private fact written in new words, and memory is where an agent that has seen private context is most likely to write one.
 - The maintainer reviews and merges every change to the agents' memory.
