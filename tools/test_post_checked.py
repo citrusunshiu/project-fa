@@ -62,13 +62,16 @@ class PostChecked(unittest.TestCase):
         result = self.refused("gh", "issue", "create", "--title", "Clean", "--body-file", bad, files=[bad])
         self.assertIn("private term", result.stdout)
 
-    def test_a_failing_title_posts_nothing_in_any_form(self):
-        for flag in (["--title", f"about {TERM}"], ["-t", TERM], [f"--title={TERM}"], [f"-t{TERM}"], [f"-t={TERM}"]):
+    def test_a_failing_title_posts_nothing(self):
+        for flag in (["--title", f"about {TERM}"], ["-t", TERM], [f"--title={TERM}"]):
             with self.subTest(flag=flag):
                 result = self.refused("gh", "pr", "create", *flag, "--body-file", self.body)
                 self.assertIn("private term", result.stdout)
         result = self.refused("gh", "pr", "merge", "7", "--squash", "--subject", TERM, "--body-file", self.body)
         self.assertIn("private term", result.stdout)
+        for flag in ([f"-t{TERM}"], [f"-t={TERM}"]):  # attached short values aren't allowed at all
+            with self.subTest(attached=flag):
+                self.refused("gh", "pr", "create", *flag, "--body-file", self.body)
 
     def test_a_check_that_errors_posts_nothing(self):
         undecodable = self.dir / "binary.md"
@@ -82,12 +85,25 @@ class PostChecked(unittest.TestCase):
         other = self.text("Not passed to the check.\n", "other.md")
         for extra in (["--body", "inline"], ["-b", "inline"], ["--body=inline"], ["-binline"],
                       ["--body-file", other], ["-F", other], [f"--body-file={other}"],
-                      ["-dtTitle"], ["-dt", "Title"], ["-db", "inline"], ["-dF", other]):
+                      ["-dtTitle"], ["-dt", "Title"], ["-db", "inline"], ["-dF", other], ["-fbinline"], [f"-ft{TERM}"],
+                      ["--fill"], ["--fill-first"], ["--fill-verbose"], ["-f"], ["--web"], ["--draft=true"]):
             with self.subTest(extra=extra):
-                self.refused("gh", "pr", "create", *extra)
+                self.refused("gh", "pr", "create", "--title", "Clean", *extra)
         for extra in (["--comment", "inline"], ["-c", "inline"]):
             with self.subTest(close=extra):
                 self.refused("gh", "issue", "close", "3", *extra)
+
+    def test_review_switches_are_allowed(self):
+        for switch in ("--comment", "-c", "--approve", "-a", "--request-changes", "-r"):
+            with self.subTest(switch=switch):
+                self.marker.unlink(missing_ok=True)
+                result = self.run_tool(self.body, "--", "gh", "pr", "review", "7", switch, "--body-file", self.body)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertTrue(self.marker.exists())
+        for switch in ("--comment=inline", "--approve=yes"):  # a switch never carries text
+            with self.subTest(attached=switch):
+                self.marker.unlink(missing_ok=True)
+                self.refused("gh", "pr", "review", "7", switch, "--body-file", self.body)
 
     def test_gh_api_takes_text_only_from_a_checked_input(self):
         other = self.text("Not passed to the check.\n", "other.md")

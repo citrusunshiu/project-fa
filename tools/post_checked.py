@@ -8,14 +8,13 @@ Usage: post_checked.py <file> [<file> ...] -- gh <command> [<arg> ...]
 
 Every file before `--` is checked with check_public_text.py, and so is any title in the command
 (--title, -t, --subject). The command runs only when the check passes; otherwise nothing runs and the
-exit code is 1. It accepts only the gh commands that agents post with (issue and pull request
-create, comment, edit, review, close and merge, and gh api), and refuses text it can't check: an
-inline body or comment (--body, -b, --comment, -c), a body file that isn't one of the checked files
-(--body-file, -F), gh api fields (which must come from a checked file through --input), and combined
-short flags such as -dt, which could hide one of these.
+exit code is 1.
 
-It guards against mistakes, not against an agent set on getting around it: CI's check of pull
-request text and the cold read of memory changes still stand behind it.
+It accepts only the gh commands agents post with, each with the flags listed in SPEC below, written
+as separate words (`-t Title` or `--title=Title`, not `-tTitle` or `-dt`). Text comes only through a
+title or a checked file (--body-file, or --input for gh api). Any other flag, and so any inline body,
+comment or field, is refused. It guards against mistakes, not against an agent set on getting around
+it: CI's check of pull request text and the cold read of memory changes still stand behind it.
 """
 import os
 import pathlib
@@ -25,57 +24,70 @@ import tempfile
 
 HERE = pathlib.Path(__file__).resolve().parent
 USAGE = "usage: post_checked.py <file> [<file> ...] -- gh <command> [<arg> ...]"
-SUPPORTED = {("issue", "create"), ("issue", "comment"), ("issue", "edit"), ("issue", "close"),
-             ("pr", "create"), ("pr", "comment"), ("pr", "edit"), ("pr", "review"), ("pr", "close"), ("pr", "merge")}
-ATTACHED = {"-t", "-b", "-c", "-F", "-f"}  # short flags whose value may be attached, as in -tTitle
+
+SWITCH, VALUE, TITLE, FILE = "switch", "value", "title", "file"
+COMMON = {"-R": VALUE, "--repo": VALUE}
+SPEC = {
+    ("issue", "create"): {"-t": TITLE, "--title": TITLE, "-F": FILE, "--body-file": FILE, "-l": VALUE, "--label": VALUE,
+                          "-m": VALUE, "--milestone": VALUE, "-a": VALUE, "--assignee": VALUE, "-p": VALUE, "--project": VALUE},
+    ("issue", "comment"): {"-F": FILE, "--body-file": FILE},
+    ("issue", "edit"): {"-t": TITLE, "--title": TITLE, "-F": FILE, "--body-file": FILE, "--add-label": VALUE,
+                        "--remove-label": VALUE, "-m": VALUE, "--milestone": VALUE},
+    ("issue", "close"): {"-r": VALUE, "--reason": VALUE},
+    ("pr", "create"): {"-t": TITLE, "--title": TITLE, "-F": FILE, "--body-file": FILE, "-B": VALUE, "--base": VALUE,
+                       "-H": VALUE, "--head": VALUE, "-d": SWITCH, "--draft": SWITCH, "-l": VALUE, "--label": VALUE,
+                       "-m": VALUE, "--milestone": VALUE, "-a": VALUE, "--assignee": VALUE, "-r": VALUE, "--reviewer": VALUE},
+    ("pr", "comment"): {"-F": FILE, "--body-file": FILE},
+    ("pr", "edit"): {"-t": TITLE, "--title": TITLE, "-F": FILE, "--body-file": FILE, "--add-label": VALUE,
+                     "--remove-label": VALUE, "-B": VALUE, "--base": VALUE, "-m": VALUE, "--milestone": VALUE},
+    ("pr", "review"): {"-a": SWITCH, "--approve": SWITCH, "-r": SWITCH, "--request-changes": SWITCH,
+                       "-c": SWITCH, "--comment": SWITCH, "-F": FILE, "--body-file": FILE},
+    ("pr", "close"): {"-d": SWITCH, "--delete-branch": SWITCH},
+    ("pr", "merge"): {"-s": SWITCH, "--squash": SWITCH, "-t": TITLE, "--subject": TITLE, "-F": FILE, "--body-file": FILE,
+                      "--auto": SWITCH, "-d": SWITCH, "--delete-branch": SWITCH, "--match-head-commit": VALUE},
+    ("api",): {"-X": VALUE, "--method": VALUE, "--input": FILE, "-H": VALUE, "--header": VALUE, "-q": VALUE,
+               "--jq": VALUE, "--silent": SWITCH, "--paginate": SWITCH},
+}
 
 
 class Refused(Exception):
     pass
 
 
-def value(command: list[str], i: int, arg: str, short: str, long: str) -> str | None:
-    """The value of `arg` when it is the option short/long in any form gh accepts, else None."""
-    if arg in (short, long):
-        if i + 1 >= len(command):
-            raise Refused(f"{arg} has no value")
-        return command[i + 1]
-    if arg.startswith(long + "="):
-        return arg[len(long) + 1:]
-    if short and arg.startswith(short) and len(arg) > len(short) and not arg.startswith("--"):
-        return arg[len(short):].removeprefix("=")
-    return None
-
-
 def inspect(command: list[str], checked: set[pathlib.Path]) -> list[str]:
-    """Return the titles to check, or raise Refused for a command or text that can't be checked."""
+    """Return the titles to check, or raise Refused for a command, flag or text that can't be checked."""
     if command[0] != "gh":
         raise Refused("only gh commands are supported, called as gh")
-    is_api = len(command) > 1 and command[1] == "api"
-    if not is_api and tuple(command[1:3]) not in SUPPORTED:
+    key = ("api",) if command[1:2] == ["api"] else tuple(command[1:3])
+    if key not in SPEC:
         raise Refused(f"gh {' '.join(command[1:3])} isn't a supported command")
+    spec = {**COMMON, **SPEC[key]}
     titles = []
-    for i, arg in enumerate(command[1:], 1):
-        if arg.startswith("-") and not arg.startswith("--") and len(arg) > 2 and arg[:2] not in ATTACHED:
-            raise Refused(f"combined short flags such as {arg} could hide text; write each flag separately")
-        if is_api:
-            for short, long in (("-f", "--raw-field"), ("-F", "--field")):
-                if value(command, i, arg, short, long) is not None:
-                    raise Refused("gh api fields can carry text; pass a checked file with --input")
-            path = value(command, i, arg, "", "--input")
-            if path is not None and pathlib.Path(path).resolve() not in checked:
-                raise Refused(f"--input {path} isn't one of the checked files")
+    i = 1 + len(key)
+    while i < len(command):
+        arg = command[i]
+        if not arg.startswith("-"):
+            i += 1  # a positional argument, such as a number or an endpoint
             continue
-        for short, long in (("-t", "--title"), ("", "--subject")):
-            title = value(command, i, arg, short, long)
-            if title is not None:
-                titles.append(title)
-        for short, long in (("-b", "--body"), ("-c", "--comment")):
-            if value(command, i, arg, short, long) is not None:
-                raise Refused(f"inline text ({long}) can't be checked; write it to a file and use --body-file")
-        path = value(command, i, arg, "-F", "--body-file")
-        if path is not None and pathlib.Path(path).resolve() not in checked:
-            raise Refused(f"--body-file {path} isn't one of the checked files")
+        name, has_value, attached = arg.partition("=") if arg.startswith("--") else (arg, "", "")
+        kind = spec.get(name)
+        if kind is None:
+            raise Refused(f"{arg} isn't a flag allowed for gh {' '.join(key)}; flags go as separate words")
+        if kind == SWITCH:
+            if has_value:
+                raise Refused(f"{name} takes no value")
+            i += 1
+            continue
+        if has_value:
+            given, i = attached, i + 1
+        elif i + 1 < len(command):
+            given, i = command[i + 1], i + 2
+        else:
+            raise Refused(f"{arg} has no value")
+        if kind == TITLE:
+            titles.append(given)
+        elif kind == FILE and pathlib.Path(given).resolve() not in checked:
+            raise Refused(f"{name} {given} isn't one of the checked files")
     return titles
 
 
