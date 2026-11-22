@@ -65,7 +65,7 @@ The maintainer drafts docs and code with AI coding agents. The maintainer decide
 tools/check.sh
 ```
 
-This runs the catalog, link and public-text checks. It needs [uv](https://docs.astral.sh/uv/).
+This runs the catalog, link and public-text checks. It needs [uv](https://docs.astral.sh/uv/). The public-text check also looks for private terms from a list only the maintainer has; without it, run `tools/check.sh --allow-no-terms`.
 
 ## Licence
 
