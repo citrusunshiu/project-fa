@@ -42,6 +42,8 @@ Assisted-by: claude-code:claude-opus-5-5
 Agent-Effort: xhigh
 ```
 
+- **Who merges.** An agent merges its own pull request once the checks pass and a second agent, one that didn't write the change, has reviewed it and approved it as the reviewer App. A pull request that touches a path [CODEOWNERS](.github/CODEOWNERS) assigns to the maintainer also needs the maintainer's approval, and the maintainer merges it: decision records, the charter and the company brief, design docs, these rules, and the checks and rulesets with what they depend on. Every change in project-fa-agents is the maintainer's to merge. The [rulesets](.github/rulesets/README.md) enforce the approvals.
+- Before pushing to a pull request's branch or editing the pull request, check that it's still open. A push after the merge never reaches `main`, and it recreates the deleted branch.
 - Run `tools/check.sh` before pushing. Enable the pre-push hook once per clone with `git config core.hooksPath .githooks`, and never bypass it.
 
 ## Public-text rules ([ADR-0010](docs/adr/0010-licence-and-public-text-policy.md))

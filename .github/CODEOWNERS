@@ -1,0 +1,23 @@
+# A pull request that touches any of these paths needs the maintainer's approval, and the
+# maintainer merges it. Agents merge the rest once the reviewer App has approved (AGENTS.md).
+
+# Decisions, scope and design
+/docs/adr/ @citrusunshiu
+/docs/charter.md @citrusunshiu
+/docs/company/ @citrusunshiu
+/docs/design/ @citrusunshiu
+
+# The rules
+/AGENTS.md @citrusunshiu
+/CLAUDE.md @citrusunshiu
+/CONTRIBUTING.md @citrusunshiu
+/SECURITY.md @citrusunshiu
+/LICENSE @citrusunshiu
+/docs/leak-response.md @citrusunshiu
+
+# The checks, the rulesets, and what they depend on
+/.github/ @citrusunshiu
+/.githooks/ @citrusunshiu
+/.gitignore @citrusunshiu
+/tools/check.sh @citrusunshiu
+/tools/check_*.py @citrusunshiu
