@@ -32,7 +32,7 @@ Follow GitHub's [guide to removing sensitive data](https://docs.github.com/en/au
 
 1. Rotate first if it's a credential.
 2. In a fresh clone, run `git filter-repo --sensitive-data-removal` (version 2.47 or later) with `--replace-text` for a phrase, or `--invert-paths --path` for a file. Check the result with the public-text check over the whole history.
-3. Force-push every branch with `git push --force --mirror origin`. Pull request refs refuse the push; that's expected.
+3. Switch off the repository's `integrity` ruleset, which blocks force-pushes ([rulesets](../.github/rulesets/README.md)). Force-push every branch with `git push --force --mirror origin`; pull request refs refuse the push, which is expected. Switch the ruleset back on straight after.
 4. Ask GitHub Support to dereference the affected pull requests, remove cached views and run garbage collection. Give them the first changed commit and the number of affected pull requests from the filter-repo output, not the leaked text.
 5. Delete every other working copy, agents' worktrees included, and clone again. An old clone pushed later puts the text back.
 6. Ask the owner of any fork to delete or rewrite it. GitHub doesn't touch forks.
@@ -57,9 +57,10 @@ Removal can't recall anything, so the checks that count run before text is publi
 
 The public-text check prints only a label such as `private term`, never the text it matched, so a failing check in CI doesn't publish what it found.
 
-## Before the repository goes public
+## Before a repository goes public
 
 - Run the public-text check and TruffleHog over the whole history.
 - Turn on secret scanning and push protection.
 - Set the `PUBLIC_TEXT_DENYLIST` secret in each repository that runs the check, so CI loads the private terms.
 - Turn on private vulnerability reporting, which [SECURITY.md](../SECURITY.md) points to.
+- Apply the [rulesets](../.github/rulesets/README.md), and require approval before workflows run for outside contributors.

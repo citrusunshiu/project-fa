@@ -70,7 +70,7 @@ Each phase ends with something that runs and at least one experiment report. Pha
 
 | Phase | Builds | Exit criteria |
 |---|---|---|
-| **0. Paper architecture** | Charter, company brief with estimates, architecture diagrams, catalog with every component at F0, templates, founding decision records, doc checks in CI | Each founding decision can be defended from its own text; the repository goes public |
+| **0. Paper architecture** | Charter, company brief with estimates, architecture diagrams, catalog with every component at F0, templates, founding decision records, doc checks in CI | Each founding decision can be defended from its own text |
 | **1. Harness, everything at F1** | One-command local cluster; profiles; observability; the simulator; the whole first business line as a simulated topology; k6 baseline; Chaos Mesh; invariant-checker skeleton | Two reports: where the saturation knee is and why; a retry storm under a slow dependency, with and without retry budgets and deadlines. Each profile's memory and disk footprint measured |
 | **2. Checkout, for real** | Order saga, ledger, inventory reservation and fake payment processor at F2; Postgres with an outbox into Kafka; idempotency keys | Invariant checker live. Reports: duplicate delivery, a consumer crash mid-batch, a flash sale on one row with three reservation designs compared |
 | **3. Chaos and SLOs** | SLOs and burn-rate alerts; a chaos suite (partition, clock skew, broker loss, database failover); eBPF probes and an XDP packet dropper; the first game day | Checkout at F3; one postmortem; an orchestrated saga against choreography, compared under failure |
@@ -91,4 +91,6 @@ Components no phase names stay at F1 until a phase or a reading note pulls them 
 - every planned component in the catalog has a design doc (`tools/check_catalog.py` lists no pending design docs);
 - each founding decision record is decided, and can be defended from its own text;
 - the company brief's estimates have been challenged and either defended or changed;
-- the checks pass in CI, and the public-text check finds nothing over the whole history ([leak response](leak-response.md#before-the-repository-goes-public)).
+- the checks pass in CI, and the public-text check finds nothing over the whole history ([leak response](leak-response.md#before-a-repository-goes-public)).
+
+The repositories went public during Phase 0 rather than at its end, so that rulesets could require an approval before every merge ([#5](https://github.com/citrusunshiu/project-fa/issues/5)).
