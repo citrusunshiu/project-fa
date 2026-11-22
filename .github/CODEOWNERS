@@ -1,11 +1,13 @@
 # A pull request that touches any of these paths needs the maintainer's approval, and the
 # maintainer merges it. Agents merge the rest once the reviewer App has approved (AGENTS.md).
 
-# Decisions, scope and design
+# Decisions, scope and design. The rest of docs/architecture/ describes the system as built and
+# changes with the work, so it stays open to agents.
 /docs/adr/ @citrusunshiu
 /docs/charter.md @citrusunshiu
 /docs/company/ @citrusunshiu
 /docs/design/ @citrusunshiu
+/docs/architecture/platform-contract.md @citrusunshiu
 
 # The rules
 /AGENTS.md @citrusunshiu
